@@ -1,0 +1,13 @@
+# This file contains values from Cookiecutter
+
+default_context:
+  project_name: "pyOMRON"
+  project_description: "Python API for acquisition and control of OMRON G3PW Power Controller"
+  organization: "ulfsri"
+  license: "MIT"
+  minimal_python_version: 3.9
+  github_name: "pyOMRON"
+  email: "grayson.bellamy@ul.org"
+  version: "0.1.0"
+  line_length: "88"
+  create_example_template: "none"
