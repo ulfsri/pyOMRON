@@ -15,6 +15,8 @@
 
 Python API for acquisition and control of OMRON G3PW Power Controller.
 
+See [OMRON G3PW User Manual §6](https://assets.omron.com/m/19fc03492512d682/original/G3PW_UsersManual_en_200811_Z280-E1-01-pdf.pdf) for reference.
+
 </div>
 
 ## Very first steps
