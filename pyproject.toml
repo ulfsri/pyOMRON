@@ -42,7 +42,7 @@ trio-serial = "^0.4.0"
 trio = "^0.23.2"
 
 [tool.poetry.dev-dependencies]
-bandit = "^1.7.1"
+bandit = "^1.7.7"
 black = {version = "^24.1a1", allow-prereleases = true}
 darglint = "^1.8.1"
 isort = {extras = ["colors"], version = "^5.10.1"}
