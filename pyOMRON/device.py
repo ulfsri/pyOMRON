@@ -1,11 +1,13 @@
+from typing import Any, Union
+
+import re
+from abc import ABC
+
 import trio
-from trio import run
 
 # from comm import CommDevice, SerialDevice
 from comm import CommDevice, SerialDevice
-from typing import Any, Union
-from abc import ABC
-import re
+from trio import run
 
 
 async def new_device(port: str, id: str = "A", **kwargs: Any):

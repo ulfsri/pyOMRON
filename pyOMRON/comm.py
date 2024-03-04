@@ -5,11 +5,12 @@ Author: Grayson Bellamy
 Date: 2024-01-05
 """
 
-import trio
-from trio_serial import SerialStream
-from trio_serial import Parity, StopBits
+from typing import ByteString, Optional
+
 from abc import ABC, abstractmethod
-from typing import Optional, ByteString
+
+import trio
+from trio_serial import Parity, SerialStream, StopBits
 
 
 class CommDevice(ABC):
