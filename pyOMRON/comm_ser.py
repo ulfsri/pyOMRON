@@ -6,6 +6,7 @@ Date: 2024-01-05
 """
 
 import serial
+
 # from trio_serial import SerialStream
 # from trio_serial import Parity, StopBits
 from abc import ABC, abstractmethod
@@ -92,17 +93,17 @@ class SerialDevice(CommDevice):
     Sets up the communication for the a gas card device using serial protocol.
     """
 
-    def __init__( # Need to verify Flow Control is set to 'none'
+    def __init__(  # Need to verify Flow Control is set to 'none'
         self,
         port: str,
         baudrate: int = 57600,
-        timeout: int = 150, # Not present in manual
+        timeout: int = 150,  # Not present in manual
         databits: int = 7,
         parity: Parity = PARITY_EVEN,
         stopbits: StopBits = StopBits.TWO,
-        xonxoff: bool = False, # Not present in manual
-        rtscts: bool = False, # Not present in manual
-        exclusive: bool = False, # Not present in manual
+        xonxoff: bool = False,  # Not present in manual
+        rtscts: bool = False,  # Not present in manual
+        exclusive: bool = False,  # Not present in manual
     ):
         """
         Initializes the serial communication.

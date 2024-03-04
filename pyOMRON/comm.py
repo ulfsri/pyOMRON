@@ -92,17 +92,17 @@ class SerialDevice(CommDevice):
     Sets up the communication for the a gas card device using serial protocol.
     """
 
-    def __init__( # Need to verify Flow Control is set to 'none'
+    def __init__(  # Need to verify Flow Control is set to 'none'
         self,
         port: str,
         baudrate: int = 57600,
-        timeout: int = 500, # Not present in manual
+        timeout: int = 500,  # Not present in manual
         databits: int = 7,
         parity: Parity = Parity.EVEN,
         stopbits: StopBits = StopBits.TWO,
-        xonxoff: bool = False, # Not present in manual
-        rtscts: bool = False, # Not present in manual
-        exclusive: bool = False, # Not present in manual
+        xonxoff: bool = False,  # Not present in manual
+        rtscts: bool = False,  # Not present in manual
+        exclusive: bool = False,  # Not present in manual
     ):
         """
         Initializes the serial communication.
@@ -191,7 +191,7 @@ class SerialDevice(CommDevice):
                 c = None
                 with trio.move_on_after(self.timeout / 1000):
                     c = await self._read(1)
-                    
+
                     if c == self.eol:
                         arr_line.append(line)
                         line = bytearray()
@@ -219,7 +219,7 @@ class SerialDevice(CommDevice):
                 c = None
                 with trio.move_on_after(self.timeout / 1000):
                     c = await self._read(1)
-                    if c == b'\x03':
+                    if c == b"\x03":
                         line += c
                         c = await self._read(1)
                         line += c
