@@ -31,7 +31,7 @@ classifiers = [  #! Update me
 
 [tool.poetry.dependencies]
 python = "^3.9"
-numpy = "^1.26.3"
+numpy = "^1.26.4"
 pandas = "^2.1.4"
 scipy = "^1.11.4"
 nidaqmx = "^0.9.0"
@@ -42,7 +42,7 @@ trio-serial = "^0.4.0"
 trio = "^0.23.2"
 
 [tool.poetry.dev-dependencies]
-bandit = "^1.7.1"
+bandit = "^1.7.7"
 black = {version = "^24.1a1", allow-prereleases = true}
 darglint = "^1.8.1"
 isort = {extras = ["colors"], version = "^5.10.1"}
@@ -51,8 +51,8 @@ mypy-extensions = "^1.0.0"
 pre-commit = "^3.6.0"
 pydocstyle = "^6.1.1"
 pylint = "^3.0.3"
-pytest = "^7.4.4"
-pyupgrade = "^3.15.0"
+pytest = "^8.1.0"
+pyupgrade = "^3.15.1"
 safety = "^2.3.4"
 coverage = "^7.4.0"
 coverage-badge = "^1.1.0"
