@@ -894,8 +894,8 @@ files = [
 [package.dependencies]
 numpy = [
     {version = ">=1.22.4,<2", markers = "python_version < \"3.11\""},
-    {version = ">=1.23.2,<2", markers = "python_version == \"3.11\""},
     {version = ">=1.26.0,<2", markers = "python_version >= \"3.12\""},
+    {version = ">=1.23.2,<2", markers = "python_version == \"3.11\""},
 ]
 python-dateutil = ">=2.8.2"
 pytz = ">=2020.1"
@@ -1055,8 +1055,8 @@ astroid = ">=3.0.1,<=3.1.0-dev0"
 colorama = {version = ">=0.4.5", markers = "sys_platform == \"win32\""}
 dill = [
     {version = ">=0.2", markers = "python_version < \"3.11\""},
-    {version = ">=0.3.6", markers = "python_version >= \"3.11\" and python_version < \"3.12\""},
     {version = ">=0.3.7", markers = "python_version >= \"3.12\""},
+    {version = ">=0.3.6", markers = "python_version >= \"3.11\" and python_version < \"3.12\""},
 ]
 isort = ">=4.2.5,<5.13.0 || >5.13.0,<6"
 mccabe = ">=0.6,<0.8"
@@ -1131,17 +1131,17 @@ files = [
 
 [[package]]
 name = "pyqtgraph"
-version = "0.13.3"
+version = "0.13.4"
 description = "Scientific Graphics and GUI Library for Python"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 files = [
-    {file = "pyqtgraph-0.13.3-py3-none-any.whl", hash = "sha256:fdcc04ac4b32a7bedf1bf3cf74cbb93ab3ba5687791712bbfa8d0712377d2f2b"},
-    {file = "pyqtgraph-0.13.3.tar.gz", hash = "sha256:58108d8411c7054e0841d8b791ee85e101fc296b9b359c0e01dde38a98ff2ace"},
+    {file = "pyqtgraph-0.13.4-py3-none-any.whl", hash = "sha256:1dc9a786aa43cd787114366058dc3b4b8cb96a0e318f334720c7e6cc6c285940"},
+    {file = "pyqtgraph-0.13.4.tar.gz", hash = "sha256:67b0d371405c4fd5f35afecfeb37d4b73bc118f187c52a965ed68d62f59b67b3"},
 ]
 
 [package.dependencies]
-numpy = ">=1.20.0"
+numpy = ">=1.22.0"
 
 [[package]]
 name = "pyserial"
@@ -1718,4 +1718,4 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "6832f8db45a21acb038206bf72ac1a574e34911e5441ae198d9f8ce505dcf1ea"
+content-hash = "4905a7dc7bf21979293257024b392dcbe0933ad56b825d2709366250af10336a"
