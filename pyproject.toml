@@ -39,7 +39,7 @@ pyqt6 = "^6.6.1"
 pyqtgraph = "^0.13.3"
 pyserial = "^3.5"
 trio-serial = "^0.4.0"
-trio = "^0.23.2"
+trio = "^0.24.0"
 
 [tool.poetry.dev-dependencies]
 bandit = "^1.7.7"
