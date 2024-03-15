@@ -164,19 +164,19 @@ class Omron(ABC):
         Prepends the frame with the device id.
         """
         return [
-            "\x02", # STX
-            "\x30", # Unit No.
-            "\x31", # Unit No.
-            "\x30", # Sub-address
-            "\x30", # Sub-address
-            "\x30", # SID
+            "\x02",  # STX
+            "\x30",  # Unit No.
+            "\x31",  # Unit No.
+            "\x30",  # Sub-address
+            "\x30",  # Sub-address
+            "\x30",  # SID
         ] + frame
 
     def __append(self, frame: list) -> list:
         """
         Apends the frame with the ETX.
         """
-        return frame + ["\x03"] # ETX
+        return frame + ["\x03"]  # ETX
 
     def __bcc_calc(self, command: list) -> int:
         """
@@ -226,26 +226,20 @@ class Omron(ABC):
             # Add each byte to the command_data list
             command_data.append(c)
         # Write to 1 element per call
-        no_elements = ["\x30", "\x30", "\x30", "\x31"] # "0001"
+        no_elements = ["\x30", "\x30", "\x30", "\x31"]  # "0001"
         # The byte lists tracks the characters in the command
-        byte_list = ([
-            "\x30", # MRC
-            "\x31", # MRC
-            "\x30", # SRC
-            "\x32"  # SRC
-        ] + command_data + [ # command
-            "\x30", # Bit Position
-            "\x30"  # Bit Position
-        ])
+        byte_list = (
+            ["\x30", "\x31", "\x30", "\x32"]  # MRC  # MRC  # SRC  # SRC
+            + command_data
+            + ["\x30", "\x30"]  # command  # Bit Position  # Bit Position
+        )
         # Add the number of elements to the byte list
         for i, c in enumerate(no_elements):
             byte_list.append(c)
         # Checks for 'Status', 'Version', or 'Heater Burnout Threshold' commands
         if (
             command[1] == "E" and (int(command[5]) != 6 or int(command[4:5]) != 14)
-        ) or (
-            command[1] == "1" and int(command[5], 16) != 14
-        ):
+        ) or (command[1] == "1" and int(command[5], 16) != 14):
             # Otherwise makes data ten times actual value
             set_values = int(float(set_values) * 10)
         # Converts the input values to hex
@@ -253,9 +247,9 @@ class Omron(ABC):
         # Removes '0x' from the hex value and makes it uppercase
         set_values = set_values[set_values.index("x") + 1 :].upper()
         # Sets default length to 4
-        L = 4  
+        L = 4
         # If the command is 'C_', length is 8 bytes instead
-        if command[0] == "C":  
+        if command[0] == "C":
             L = 8
         # Prepend 0's to make command correct length
         while len(set_values) < L:
@@ -276,46 +270,44 @@ class Omron(ABC):
         # Checks for an error
         self.__end_code(ret)
         # Checks response code, '0000' is 'Normal Completion'
-        if (ret[23] != "0" or ret[25] != "0" or ret[27] != "0" or ret[29] != "0"):
+        if ret[23] != "0" or ret[25] != "0" or ret[27] != "0" or ret[29] != "0":
             print("Error occured")
-            if (
-                ret[23] == "1" and ret[25] == "0" and ret[27] == "0" and ret[29] == "1"
-            ):
-                print("Command length too long") # '1001'
+            if ret[23] == "1" and ret[25] == "0" and ret[27] == "0" and ret[29] == "1":
+                print("Command length too long")  # '1001'
             elif (
                 ret[23] == "1" and ret[25] == "0" and ret[27] == "0" and ret[29] == "2"
             ):
-                print("Command length too short") # '1002'
+                print("Command length too short")  # '1002'
             elif (
                 ret[23] == "1" and ret[25] == "1" and ret[27] == "0" and ret[29] == "1"
             ):
-                print("Area Type Error") # '1101'
+                print("Area Type Error")  # '1101'
             elif (
                 ret[23] == "1" and ret[25] == "0" and ret[27] == "0" and ret[29] == "3"
             ):
-                print("Number of elements/Number of data do not agree") # '1003'
+                print("Number of elements/Number of data do not agree")  # '1003'
             elif (
                 ret[23] == "1" and ret[25] == "1" and ret[27] == "0" and ret[29] == "0"
             ):
-                print("Parameter error") # '1100'
+                print("Parameter error")  # '1100'
             elif (
                 ret[23] == "2" and ret[25] == "2" and ret[27] == "0" and ret[29] == "3"
             ):
-                print("Operation error") # '2203'
+                print("Operation error")  # '2203'
             else:
-                print("Unknown Error") # Any other code
+                print("Unknown Error")  # Any other code
         # If no error occurs
         else:
             # Convert back to hex (makes all chars readable)
             byte = byte.hex()
             # Removes everything but the address
-            byte = byte[20:-4]  
+            byte = byte[20:-4]
             # Converts the hex string to bytes
             byte = bytes.fromhex(byte)
             # Formats byte to ASCII
-            byte.decode("ASCII") 
+            byte.decode("ASCII")
             # Converts byte to string
-            byte = str(byte, encoding="ascii")  
+            byte = str(byte, encoding="ascii")
             for i in range(int(byte[8:12])):
                 # Prints the address that was called
                 print(
@@ -331,15 +323,11 @@ class Omron(ABC):
         for i, c in enumerate(command):
             command_data.append(c)  # Add each byte to the command_data list
         # The byte lists tracks the characters in the command
-        byte_list = ([
-            "\x30", # MRC
-            "\x31", # MRC
-            "\x30", # SRC
-            "\x31"  # SRC
-        ] + command_data + [ # command
-            "\x30", # Bit Position
-            "\x30"  # Bit Position
-        ])
+        byte_list = (
+            ["\x30", "\x31", "\x30", "\x31"]  # MRC  # MRC  # SRC  # SRC
+            + command_data
+            + ["\x30", "\x30"]  # command  # Bit Position  # Bit Position
+        )
         # Reads 1 element per call
         no_elements = ["\x30", "\x30", "\x30", "\x31"]  # '0001'
         # Add the number of elements to the byte list
@@ -360,37 +348,35 @@ class Omron(ABC):
         # Creates an empty dictionary for displaying the result
         print_dict = {}
         # Checks response code, '0000' is 'Normal Completion'
-        if (ret[23] != "0" or ret[25] != "0" or ret[27] != "0" or ret[29] != "0"):
+        if ret[23] != "0" or ret[25] != "0" or ret[27] != "0" or ret[29] != "0":
             print("Error occured")
-            if (
-                ret[23] == "1" and ret[25] == "0" and ret[27] == "0" and ret[29] == "1"
-            ):
-                print("Command length too long") # '1001'
+            if ret[23] == "1" and ret[25] == "0" and ret[27] == "0" and ret[29] == "1":
+                print("Command length too long")  # '1001'
             elif (
                 ret[23] == "1" and ret[25] == "0" and ret[27] == "0" and ret[29] == "2"
             ):
-                print("Command length too short") # '1002'
+                print("Command length too short")  # '1002'
             elif (
                 ret[23] == "1" and ret[25] == "1" and ret[27] == "0" and ret[29] == "1"
             ):
-                print("Area Type Error") # '1101'
+                print("Area Type Error")  # '1101'
             elif (
                 ret[23] == "1" and ret[25] == "1" and ret[27] == "0" and ret[29] == "B"
             ):
-                print("Response length too long") # '110B'
+                print("Response length too long")  # '110B'
             elif (
                 ret[23] == "1" and ret[25] == "1" and ret[27] == "0" and ret[29] == "0"
             ):
-                print("Parameter error") # '1100'
+                print("Parameter error")  # '1100'
             elif (
                 ret[23] == "2" and ret[25] == "2" and ret[27] == "0" and ret[29] == "3"
             ):
-                print("Operation error") # '2203'
+                print("Operation error")  # '2203'
             else:
-                print("Unknown Error") # Any other code
+                print("Unknown Error")  # Any other code
         else:
             # Removes everything but the set values from the response
-            ret = ret[30:-4] 
+            ret = ret[30:-4]
             # Convert back to hex (makes all chars readable)
             byte = byte.hex()
             # Removes everything but the address
@@ -398,11 +384,11 @@ class Omron(ABC):
             # Converts the hex string to bytes
             byte = bytes.fromhex(byte)
             # Formats byte to ASCII
-            byte.decode("ASCII") 
+            byte.decode("ASCII")
             # Converts byte to string
             byte = str(byte, encoding="ascii")
             # For each element in response (should be one)
-            for i in range(int(byte[8:12])): # 8:12 should be 0001
+            for i in range(int(byte[8:12])):  # 8:12 should be 0001
                 if byte[0:1] == "C":  # The 8 bit case
                     print_dict[
                         self.addresses[byte[0:2]][
@@ -423,9 +409,9 @@ class Omron(ABC):
                     print("Error in Variable Type")
         return print_dict  # returns the dictionary with the address: value pairs
 
-# This has the right code, but I don't think it recieves the response and translates it back correctly
-# Did we just decde we didn't need it?
-# I haven't been able to test it, I can't get the device to respond (wrong port?)
+    # This has the right code, but I don't think it recieves the response and translates it back correctly
+    # Did we just decde we didn't need it?
+    # I haven't been able to test it, I can't get the device to respond (wrong port?)
     async def controller_status_read(self):
         """
         Reads the operating and error status.
@@ -448,7 +434,12 @@ class Omron(ABC):
         while test_input > 0:
             test_data.insert(0, ascii(test_input % 10))
             test_input = int(test_input / 10)
-        byte_list = ["\x30", "\x38", "\x30", "\x31"] + test_data # '0801' is echo-back command
+        byte_list = [
+            "\x30",
+            "\x38",
+            "\x30",
+            "\x31",
+        ] + test_data  # '0801' is echo-back command
         byte_list = self.__prepend(byte_list)
         byte_list = self.__append(byte_list)
         byte = bytes("".join(byte_list), "ascii")
@@ -472,7 +463,7 @@ class Omron(ABC):
             for var_type, dict in self.addresses.items():
                 for add, command in dict.items():
                     if c == command:
-                        comm_add = (var_type + add)  
+                        comm_add = var_type + add
             # Calls read and adds the result to the dictionary
             ret_dict.update(await self.variable_area_read(comm_add))
         return ret_dict
@@ -485,6 +476,6 @@ class Omron(ABC):
         for var_type, dict in self.addresses.items():
             for add, command in dict.items():
                 if comm == command:
-                    comm_add = (var_type + add)  
+                    comm_add = var_type + add
         await self.variable_area_write(comm_add, val)  # Sets the value
         return
