@@ -25,7 +25,8 @@ class Omron(ABC):
     Omron class.
     """
 
-    addresses = {  # These are all the Variable Type - Address combinations presented in the User Manual
+    # These are all the Variable Type - Address combinations presented in the User Manual
+    addresses = {
         "CE": {
             "0000": "Input Monitor",
             "0001": "Internal Duty Monitor",
@@ -163,19 +164,19 @@ class Omron(ABC):
         Prepends the frame with the device id.
         """
         return [
-            "\x02",
-            "\x30",
-            "\x31",
-            "\x30",
-            "\x30",
-            "\x30",
-        ] + frame  # [STX, Unit No., Unit No., Sub-address, Sub-addres, SID]
+            "\x02", # STX
+            "\x30", # Unit No.
+            "\x31", # Unit No.
+            "\x30", # Sub-address
+            "\x30", # Sub-address
+            "\x30", # SID
+        ] + frame
 
     def __append(self, frame: list) -> list:
         """
         Apends the frame with the ETX.
         """
-        return frame + ["\x03"]
+        return frame + ["\x03"] # ETX
 
     def __bcc_calc(self, command: list) -> int:
         """
@@ -190,6 +191,7 @@ class Omron(ABC):
     def __end_code(self, ret: str):
         """
         Checks if the end code is 00.
+        If en error is present, the error name is printed
         """
         if ret[11] != "0" and ret[13] != "0":  #'00' is the 'Normal Completion' end code
             if ret[11] == "0" and ret[13] == "F":
@@ -215,82 +217,105 @@ class Omron(ABC):
     async def variable_area_write(self, command: str, set_values: float):
         """
         Changes set values
+        command describes the action the device should take
+        set_values is the value the variable should be set to
         """
         command_data = []
-        for i, c in enumerate(
-            command
-        ):  # Convert every character of the command to a byte
-            command_data.append(c)  # Add each byte to the command_data list
-        no_elements = ["\x30", "\x30", "\x30", "\x31"]  # Writes to 1 element per call
-        byte_list = (
-            ["\x30", "\x31", "\x30", "\x32"] + command_data + ["\x30", "\x30"]
-        )  # [MRC, MRC, SRC, SRC, command, Bit Position, Bit Position]
+        # Convert every character of the command string to a byte
+        for i, c in enumerate(command):
+            # Add each byte to the command_data list
+            command_data.append(c)
+        # Write to 1 element per call
+        no_elements = ["\x30", "\x30", "\x30", "\x31"] # "0001"
+        # The byte lists tracks the characters in the command
+        byte_list = ([
+            "\x30", # MRC
+            "\x31", # MRC
+            "\x30", # SRC
+            "\x32"  # SRC
+        ] + command_data + [ # command
+            "\x30", # Bit Position
+            "\x30"  # Bit Position
+        ])
+        # Add the number of elements to the byte list
         for i, c in enumerate(no_elements):
             byte_list.append(c)
+        # Checks for 'Status', 'Version', or 'Heater Burnout Threshold' commands
         if (
             command[1] == "E" and (int(command[5]) != 6 or int(command[4:5]) != 14)
         ) or (
             command[1] == "1" and int(command[5], 16) != 14
-        ):  # Checks for 'Status', 'Version', or 'Heater Burnout Threshold'
-            set_values = int(
-                float(set_values) * 10
-            )  # Otherwise makes data ten times actual value
+        ):
+            # Otherwise makes data ten times actual value
+            set_values = int(float(set_values) * 10)
+        # Converts the input values to hex
         set_values = hex(set_values)
-        set_values = set_values[
-            set_values.index("x") + 1 :
-        ].upper()  # Removes '0x' from the hex value and makes it uppercase
-        L = 4  # Default length is 4
-        if command[0] == "C":  # If the command is 'C_', there are 8 bytes instead
+        # Removes '0x' from the hex value and makes it uppercase
+        set_values = set_values[set_values.index("x") + 1 :].upper()
+        # Sets default length to 4
+        L = 4  
+        # If the command is 'C_', length is 8 bytes instead
+        if command[0] == "C":  
             L = 8
+        # Prepend 0's to make command correct length
         while len(set_values) < L:
-            set_values = "0" + set_values  # Prepend 0's to make command length 4
+            set_values = "0" + set_values
+        # Add the set values to the byte list
         for i, c in enumerate(set_values):
             byte_list.append(c)
         byte_list = self.__prepend(byte_list)
         byte_list = self.__append(byte_list)
+        # Convert byte list to an ascii string
         byte = bytes("".join(byte_list), "ascii")
-        byte += bytes(
-            [self.__bcc_calc(byte_list)]
-        )  # Adds bcc to the end of the command
-        ret = await self._device._write_readline(
-            byte
-        )  # Writes the command and reads the response
+        # Compute and append the bcc
+        byte += bytes([self.__bcc_calc(byte_list)])
+        # Writes the command and reads the response
+        ret = await self._device._write_readline(byte)
+        # Converts the response to a hex string
         ret = ret.hex()
+        # Checks for an error
         self.__end_code(ret)
-        if (
-            ret[23] != "0" or ret[25] != "0" or ret[27] != "0" or ret[29] != "0"
-        ):  # Checks response code, '0000' is 'Normal Completion'
+        # Checks response code, '0000' is 'Normal Completion'
+        if (ret[23] != "0" or ret[25] != "0" or ret[27] != "0" or ret[29] != "0"):
             print("Error occured")
-            if ret[23] == "1" and ret[25] == "0" and ret[27] == "0" and ret[29] == "1":
-                print("Command length too long")
+            if (
+                ret[23] == "1" and ret[25] == "0" and ret[27] == "0" and ret[29] == "1"
+            ):
+                print("Command length too long") # '1001'
             elif (
                 ret[23] == "1" and ret[25] == "0" and ret[27] == "0" and ret[29] == "2"
             ):
-                print("Command length too short")
+                print("Command length too short") # '1002'
             elif (
                 ret[23] == "1" and ret[25] == "1" and ret[27] == "0" and ret[29] == "1"
             ):
-                print("Area Type Error")
+                print("Area Type Error") # '1101'
             elif (
                 ret[23] == "1" and ret[25] == "0" and ret[27] == "0" and ret[29] == "3"
             ):
-                print("Number of elements/Number of data do not agree")
+                print("Number of elements/Number of data do not agree") # '1003'
             elif (
                 ret[23] == "1" and ret[25] == "1" and ret[27] == "0" and ret[29] == "0"
             ):
-                print("Parameter error")
+                print("Parameter error") # '1100'
             elif (
                 ret[23] == "2" and ret[25] == "2" and ret[27] == "0" and ret[29] == "3"
             ):
-                print("Operation error")
+                print("Operation error") # '2203'
             else:
-                print("Unknown Error")
+                print("Unknown Error") # Any other code
+        # If no error occurs
         else:
+            # Convert back to hex (makes all chars readable)
             byte = byte.hex()
-            byte = byte[20:-4]  # Removes everything but the address
-            byte = bytes.fromhex(byte)  # Converts the hex string to bytes
-            byte.decode("ASCII")  # Formats byte to ASCII
-            byte = str(byte, encoding="ascii")  # Converts byte to string
+            # Removes everything but the address
+            byte = byte[20:-4]  
+            # Converts the hex string to bytes
+            byte = bytes.fromhex(byte)
+            # Formats byte to ASCII
+            byte.decode("ASCII") 
+            # Converts byte to string
+            byte = str(byte, encoding="ascii")  
             for i in range(int(byte[8:12])):
                 # Prints the address that was called
                 print(
@@ -302,63 +327,83 @@ class Omron(ABC):
         Reads set values.
         """
         command_data = []
-        for i, c in enumerate(
-            command
-        ):  # Convert every character of the command to a byte
+        # Convert every character of the command to a byte
+        for i, c in enumerate(command):
             command_data.append(c)  # Add each byte to the command_data list
-        byte_list = (
-            ["\x30", "\x31", "\x30", "\x31"] + command_data + ["\x30", "\x30"]
-        )  # [MRC, MRC, SRC, SRC, command, Bit Position, Bit Position]
-        no_elements = ["\x30", "\x30", "\x30", "\x31"]  # Reads to 1 element per call
+        # The byte lists tracks the characters in the command
+        byte_list = ([
+            "\x30", # MRC
+            "\x31", # MRC
+            "\x30", # SRC
+            "\x31"  # SRC
+        ] + command_data + [ # command
+            "\x30", # Bit Position
+            "\x30"  # Bit Position
+        ])
+        # Reads 1 element per call
+        no_elements = ["\x30", "\x30", "\x30", "\x31"]  # '0001'
+        # Add the number of elements to the byte list
         for i, c in enumerate(no_elements):
             byte_list.append(c)
         byte_list = self.__prepend(byte_list)
         byte_list = self.__append(byte_list)
+        # Convert byte list to an ascii string
         byte = bytes("".join(byte_list), "ascii")
+        # Compute and append the bcc
         byte += bytes([self.__bcc_calc(byte_list)])
+        # Writes the command and reads the response
         ret = await self._device._write_readline(byte)
+        # Converts the response to a hex string
         ret = ret.hex()
+        # Checks for an error
         self.__end_code(ret)
-        print_dict = {}  # Creates an empty dictionary for displaying the result
-        if (
-            ret[23] != "0" or ret[25] != "0" or ret[27] != "0" or ret[29] != "0"
-        ):  # Checks response code, '0000' is 'Normal Completion'
+        # Creates an empty dictionary for displaying the result
+        print_dict = {}
+        # Checks response code, '0000' is 'Normal Completion'
+        if (ret[23] != "0" or ret[25] != "0" or ret[27] != "0" or ret[29] != "0"):
             print("Error occured")
-            if ret[23] == "1" and ret[25] == "0" and ret[27] == "0" and ret[29] == "1":
-                print("Command length too long")
+            if (
+                ret[23] == "1" and ret[25] == "0" and ret[27] == "0" and ret[29] == "1"
+            ):
+                print("Command length too long") # '1001'
             elif (
                 ret[23] == "1" and ret[25] == "0" and ret[27] == "0" and ret[29] == "2"
             ):
-                print("Command length too short")
+                print("Command length too short") # '1002'
             elif (
                 ret[23] == "1" and ret[25] == "1" and ret[27] == "0" and ret[29] == "1"
             ):
-                print("Area Type Error")
+                print("Area Type Error") # '1101'
             elif (
                 ret[23] == "1" and ret[25] == "1" and ret[27] == "0" and ret[29] == "B"
             ):
-                print("Response length too long")
+                print("Response length too long") # '110B'
             elif (
                 ret[23] == "1" and ret[25] == "1" and ret[27] == "0" and ret[29] == "0"
             ):
-                print("Parameter error")
+                print("Parameter error") # '1100'
             elif (
                 ret[23] == "2" and ret[25] == "2" and ret[27] == "0" and ret[29] == "3"
             ):
-                print("Operation error")
+                print("Operation error") # '2203'
             else:
-                print("Unknown Error")
+                print("Unknown Error") # Any other code
         else:
-            ret = ret[30:-4]  # Removes everything but the set values from the response
+            # Removes everything but the set values from the response
+            ret = ret[30:-4] 
+            # Convert back to hex (makes all chars readable)
             byte = byte.hex()
-            byte = byte[20:-4]  # Removes everything but the address
+            # Removes everything but the address
+            byte = byte[20:-4]
+            # Converts the hex string to bytes
             byte = bytes.fromhex(byte)
-            byte.decode("ASCII")
+            # Formats byte to ASCII
+            byte.decode("ASCII") 
+            # Converts byte to string
             byte = str(byte, encoding="ascii")
-            for i in range(
-                int(byte[8:12])
-            ):  # For each element in response (should be one)
-                if byte[0:1] == "C":  # The eight bit case
+            # For each element in response (should be one)
+            for i in range(int(byte[8:12])): # 8:12 should be 0001
+                if byte[0:1] == "C":  # The 8 bit case
                     print_dict[
                         self.addresses[byte[0:2]][
                             list(self.addresses[byte[0:2]])[
@@ -376,8 +421,11 @@ class Omron(ABC):
                     ] = bytes.fromhex(ret[0 + 8 * i : 8 + 8 * i]).decode("ascii")
                 else:
                     print("Error in Variable Type")
-        return print_dict  # returns the dictionary with the adress: value pair
+        return print_dict  # returns the dictionary with the address: value pairs
 
+# This has the right code, but I don't think it recieves the response and translates it back correctly
+# Did we just decde we didn't need it?
+# I haven't been able to test it, I can't get the device to respond (wrong port?)
     async def controller_status_read(self):
         """
         Reads the operating and error status.
@@ -388,18 +436,19 @@ class Omron(ABC):
         byte = bytes("".join(byte_list), "ascii")
         byte += bytes([self.__bcc_calc(byte_list)])
         ret = await self._device._write_readall(byte.decode("ascii"))
-        return
+        return ret
 
     async def echo_back_test(self):
         """
         Performs an echo back test.
+        This was used for debugging and relies on input statements
         """
         test_input = int(input("Enter test data (0-200) >"))
         test_data = []
         while test_input > 0:
             test_data.insert(0, ascii(test_input % 10))
             test_input = int(test_input / 10)
-        byte_list = ["\x30", "\x38", "\x30", "\x31"] + test_data
+        byte_list = ["\x30", "\x38", "\x30", "\x31"] + test_data # '0801' is echo-back command
         byte_list = self.__prepend(byte_list)
         byte_list = self.__append(byte_list)
         byte = bytes("".join(byte_list), "ascii")
@@ -416,32 +465,26 @@ class Omron(ABC):
         """
         Gets the current value of the device.
         """
-        ret_dict = {}  # Makes a dictionary to store the results
+        # Makes a dictionary to store the results
+        ret_dict = {}
         for c in comm:
+            # Search through addresses to find the address for the comm
             for var_type, dict in self.addresses.items():
                 for add, command in dict.items():
                     if c == command:
-                        comm_add = (
-                            var_type + add
-                        )  # Search through addresses to find the address for the comm
-            ret_dict.update(
-                await self.variable_area_read(comm_add)
-            )  # Adds the result to the dictionary
+                        comm_add = (var_type + add)  
+            # Calls read and adds the result to the dictionary
+            ret_dict.update(await self.variable_area_read(comm_add))
         return ret_dict
 
     async def set(self, comm, val):
         """
         Sets value of comm to val.
-
-        Args:
-            comm (_type_): _description_
-            val (_type_): _description_
         """
+        # Search through addresses to find the address for the comm
         for var_type, dict in self.addresses.items():
             for add, command in dict.items():
                 if comm == command:
-                    comm_add = (
-                        var_type + add
-                    )  # Search through addresses to find the address for the comm
+                    comm_add = (var_type + add)  
         await self.variable_area_write(comm_add, val)  # Sets the value
         return
