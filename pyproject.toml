@@ -34,18 +34,12 @@ python = "^3.9"
 numpy = "^1.26.4"
 pandas = "^2.2.1"
 scipy = "^1.11.4"
-nidaqmx = "^0.9.0"
-pyqt6 = "^6.6.1"
-pyqtgraph = "^0.13.3"
-pyserial = "^3.5"
 trio-serial = "^0.4.0"
 trio = "^0.25.0"
 
 [tool.poetry.dev-dependencies]
 bandit = "^1.7.7"
-black = {version = "^24.1a1", allow-prereleases = true}
 darglint = "^1.8.1"
-isort = {extras = ["colors"], version = "^5.10.1"}
 mypy = "^1.0"
 mypy-extensions = "^1.0.0"
 pre-commit = "^3.6.0"
@@ -58,41 +52,7 @@ coverage = "^7.4.0"
 coverage-badge = "^1.1.0"
 pytest-html = "^4.1.1"
 pytest-cov = "^5.0.0"
-
-[tool.black]
-# https://github.com/psf/black
-target-version = ["py39"]
-line-length = 88
-color = true
-
-exclude = '''
-/(
-    \.git
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | _build
-    | buck-out
-    | build
-    | dist
-    | env
-    | venv
-)/
-'''
-
-[tool.isort]
-# https://github.com/timothycrosley/isort/
-py_version = 39
-line_length = 88
-
-known_typing = ["typing", "types", "typing_extensions", "mypy", "mypy_extensions"]
-sections = ["FUTURE", "TYPING", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
-include_trailing_comma = true
-profile = "black"
-multi_line_output = 3
-indent = 4
-color_output = true
+ruff = "^0.3.4"
 
 [tool.mypy]
 # https://mypy.readthedocs.io/en/latest/config_file.html#using-a-pyproject-toml-file
