@@ -8,12 +8,11 @@ import trio
 # from comm import CommDevice, SerialDevice
 from comm import CommDevice, SerialDevice
 from trio import run
+import trio
 
 
 async def new_device(port: str, id: str = "A", **kwargs: Any):
-    """
-    Creates a new device. Chooses appropriate device based on characteristics.
-    """
+    """Creates a new device. Chooses appropriate device based on characteristics."""
     if port.startswith("/dev/"):
         device = SerialDevice(port, **kwargs)
 
@@ -21,9 +20,7 @@ async def new_device(port: str, id: str = "A", **kwargs: Any):
 
 
 class Omron(ABC):
-    """
-    Omron class.
-    """
+    """Omron class."""
 
     # These are all the Variable Type - Address combinations presented in the User Manual
     addresses = {
@@ -154,15 +151,21 @@ class Omron(ABC):
     def __init__(
         self, device: SerialDevice, dev_info: dict, id: str = "A", **kwargs: Any
     ) -> None:
+        """Initializes the Device object.
+
+        Args:
+            device (SerialDevice): The serial device object.
+            dev_info (dict): The device information.
+            id (str, optional): The device ID. Defaults to "A".
+            **kwargs: Additional keyword arguments.
+        """
         self._device = device
         self._id = id
         self._df_format = None
         self._df_units = None
 
     def __prepend(self, frame: list) -> list:
-        """
-        Prepends the frame with the device id.
-        """
+        """Prepends the frame with the device id."""
         return [
             "\x02",  # STX
             "\x30",  # Unit No.
@@ -173,15 +176,11 @@ class Omron(ABC):
         ] + frame
 
     def __append(self, frame: list) -> list:
-        """
-        Apends the frame with the ETX.
-        """
+        """Apends the frame with the ETX."""
         return frame + ["\x03"]  # ETX
 
     def __bcc_calc(self, command: list) -> int:
-        """
-        Calculates the BCC of the command.
-        """
+        """Calculates the BCC of the command."""
         bcc = 0
         for i in range(len(command)):
             if i != 0:
@@ -189,9 +188,9 @@ class Omron(ABC):
         return bcc
 
     def __end_code(self, ret: str):
-        """
-        Checks if the end code is 00.
-        If en error is present, the error name is printed
+        """Checks if the end code is 00.
+
+        If en error is present, the error name is printed.
         """
         if ret[11] != "0" and ret[13] != "0":  #'00' is the 'Normal Completion' end code
             if ret[11] == "0" and ret[13] == "F":
@@ -215,10 +214,10 @@ class Omron(ABC):
         return
 
     async def variable_area_write(self, command: str, set_values: float):
-        """
-        Changes set values
+        """Changes set values.
+
         command describes the action the device should take
-        set_values is the value the variable should be set to
+        set_values is the value the variable should be set to.
         """
         command_data = []
         # Convert every character of the command string to a byte
@@ -315,9 +314,7 @@ class Omron(ABC):
                 )
 
     async def variable_area_read(self, command: str):
-        """
-        Reads set values.
-        """
+        """Reads set values."""
         command_data = []
         # Convert every character of the command to a byte
         for i, c in enumerate(command):
@@ -413,9 +410,7 @@ class Omron(ABC):
     # Did we just decde we didn't need it?
     # I haven't been able to test it, I can't get the device to respond (wrong port?)
     async def controller_status_read(self):
-        """
-        Reads the operating and error status.
-        """
+        """Reads the operating and error status."""
         byte_list = ["\x30", "\x36", "\x30", "\x31"]
         byte_list = self.__prepend(byte_list)
         byte_list = self.__append(byte_list)
@@ -425,9 +420,9 @@ class Omron(ABC):
         return ret
 
     async def echo_back_test(self):
-        """
-        Performs an echo back test.
-        This was used for debugging and relies on input statements
+        """Performs an echo back test.
+
+        This was used for debugging and relies on input statements.
         """
         test_input = int(input("Enter test data (0-200) >"))
         test_data = []
@@ -443,9 +438,11 @@ class Omron(ABC):
         byte_list = self.__prepend(byte_list)
         byte_list = self.__append(byte_list)
         byte = bytes("".join(byte_list), "ascii")
+
         byte += bytes([self.__bcc_calc(byte_list)])
         ret = await self._device._write_readline(byte)
         ret = ret.hex()
+
         self.__end_code(ret)
         if ret[23] != "0" or ret[25] != "0" or ret[27] != "0" or ret[29] != "0":
             print("Error occured")
@@ -453,9 +450,7 @@ class Omron(ABC):
         return
 
     async def get(self, comm: list):
-        """
-        Gets the current value of the device.
-        """
+        """Gets the current value of the device."""
         # Makes a dictionary to store the results
         ret_dict = {}
         for c in comm:
@@ -469,9 +464,7 @@ class Omron(ABC):
         return ret_dict
 
     async def set(self, comm, val):
-        """
-        Sets value of comm to val.
-        """
+        """Sets value of comm to val."""
         # Search through addresses to find the address for the comm
         for var_type, dict in self.addresses.items():
             for add, command in dict.items():
