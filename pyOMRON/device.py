@@ -12,7 +12,14 @@ import trio
 
 
 async def new_device(port: str, id: str = "A", **kwargs: Any):
-    """Creates a new device. Chooses appropriate device based on characteristics."""
+    """Creates a new device. Chooses appropriate device based on characteristics.
+        
+    Args:
+        **kwargs: Any
+
+    Returns:
+        Device: The new device.        
+    """
     if port.startswith("/dev/"):
         device = SerialDevice(port, **kwargs)
 
@@ -21,132 +28,10 @@ async def new_device(port: str, id: str = "A", **kwargs: Any):
 
 class Omron(ABC):
     """Omron class."""
-
-    # These are all the Variable Type - Address combinations presented in the User Manual
-    addresses = {
-        "CE": {
-            "0000": "Input Monitor",
-            "0001": "Internal Duty Monitor",
-            "0002": "Output Monitor",
-            "0003": "Phase Angle Monitor",
-            "0004": "Current Monitor",
-            "0005": "Total Run Time Monitor",
-            "0006": "Status",
-            "0007": "Heater characteristic of resistance",
-            "0014": "Version",
-        },
-        "8E": {
-            "0000": "Input Monitor",
-            "0001": "Internal Duty Monitor",
-            "0002": "Output Monitor",
-            "0003": "Phase Angle Monitor",
-            "0004": "Current Monitor",
-            "0005": "Total Run Time Monitor",
-            "0006": "Status",
-            "0007": "Heater characteristic of resistance",
-            "0014": "Version",
-        },
-        "C1": {
-            "0000": "Communications Main Setting 1",
-            "0001": "Communications Main Setting 2",
-            "0002": "Communications Main Setting 3",
-            "0003": "Communications Main Setting 4",
-            "0004": "Communications Main Setting 5",
-            "0005": "Communications Main Setting 6",
-            "0006": "Communications Main Setting 7",
-            "0007": "Communications Main Setting 8",
-            "0008": "Internal Duty Setting",
-            "0009": "Base-Up Value",
-            "000A": "Soft-start Up Time",
-            "000B": "Soft-start Down Time",
-            "000C": "Output Upper Limit",
-            "000D": "Output Lower Limit",
-            "000E": "Heater Burnout Threshold",
-            "000F": "Heater Characteristic Resistance for Phase Control",
-            "0010": "Heater Characteristic Resistance for Optimum Cycle Control",
-            "0011": "Heater Burnout Detection Lower Limit",
-        },
-        "81": {
-            "0000": "Communications Main Setting 1",
-            "0001": "Communications Main Setting 2",
-            "0002": "Communications Main Setting 3",
-            "0003": "Communications Main Setting 4",
-            "0004": "Communications Main Setting 5",
-            "0005": "Communications Main Setting 6",
-            "0006": "Communications Main Setting 7",
-            "0007": "Communications Main Setting 8",
-            "0008": "Internal Duty Setting",
-            "0009": "Base-Up Value",
-            "000A": "Soft-start Up Time",
-            "000B": "Soft-start Down Time",
-            "000C": "Output Upper Limit",
-            "000D": "Output Lower Limit",
-            "000E": "Heater Burnout Threshold",
-            "000F": "Heater Characteristic Resistance for Phase Control",
-            "0010": "Heater Characteristic Resistance for Optimum Cycle Control",
-            "0011": "Heater Burnout Detection Lower Limit",
-        },
-        "C3": {
-            "0000": "Communications Data Length",
-            "0001": "Communications Stop Bits",
-            "0002": "Communications Parity",
-            "0003": "Send Wait Time",
-            "0004": "Communications Timeout Time",
-            "0005": "Communications Unit Number",
-            "0006": "Communications Baud Rate",
-            "0007": "Communications Main Setting Number",
-            "0008": "External Duty Input Enable/Disable",
-            "0009": "Output Mode Selection",
-            "000A": "Input Digital Filter Time Constant",
-            "000B": "Input Signal Type",
-            "000C": "Main Setting Automatic Input Selection",
-            "000D": "Main Setting Manual Input Selection",
-            "000E": "Control Method Default",
-            "000F": "Main Setting Automatic/Manual Default",
-            "0010": "Number of Alarms for Heater Burnout Detection",
-            "0011": "Load Current Upper Limit",
-            "0012": "Event Input Assignment",
-            "0013": "Alarm Output Open in Alarm",
-            "0014": "Heater Burnout Alarm Operation",
-            "0015": "Total Run Time Exceeded Alarm Operation",
-            "0016": "Total Run Time Alarm Set Value",
-            "0017": "External Input Range Alarm Operation",
-            "0018": "External Duty Input Alarm Operation",
-            "0019": "SSR short circuit detection enabled",
-            "001A": "SSR open failure detection",
-            "001B": "CT failure detection",
-        },
-        "83": {
-            "0000": "Communications Data Length",
-            "0001": "Communications Stop Bits",
-            "0002": "Communications Parity",
-            "0003": "Send Wait Time",
-            "0004": "Communications Timeout Time",
-            "0005": "Communications Unit Number",
-            "0006": "Communications Baud Rate",
-            "0007": "Communications Main Setting Number",
-            "0008": "External Duty Input Enable/Disable",
-            "0009": "Output Mode Selection",
-            "000A": "Input Digital Filter Time Constant",
-            "000B": "Input Signal Type",
-            "000C": "Main Setting Automatic Input Selection",
-            "000D": "Main Setting Manual Input Selection",
-            "000E": "Control Method Default",
-            "000F": "Main Setting Automatic/Manual Default",
-            "0010": "Number of Alarms for Heater Burnout Detection",
-            "0011": "Load Current Upper Limit",
-            "0012": "Event Input Assignment",
-            "0013": "Alarm Output Open in Alarm",
-            "0014": "Heater Burnout Alarm Operation",
-            "0015": "Total Run Time Exceeded Alarm Operation",
-            "0016": "Total Run Time Alarm Set Value",
-            "0017": "External Input Range Alarm Operation",
-            "0018": "External Duty Input Alarm Operation",
-            "0019": "SSR short circuit detection enabled",
-            "001A": "SSR open failure detection",
-            "001B": "CT failure detection",
-        },
-    }
+    
+    with open("codes.json") as f:
+        codes = json.load(f)
+    commands = codes["addresses"][0]
 
     def __init__(
         self, device: SerialDevice, dev_info: dict, id: str = "A", **kwargs: Any
@@ -165,7 +50,14 @@ class Omron(ABC):
         self._df_units = None
 
     def __prepend(self, frame: list) -> list:
-        """Prepends the frame with the device id."""
+        """Prepends the frame with the device id.
+        
+        Args:
+            frame (list): command frame to prepend to
+        
+        Returns:
+            list: frame with prepended info
+        """
         return [
             "\x02",  # STX
             "\x30",  # Unit No.
@@ -176,21 +68,42 @@ class Omron(ABC):
         ] + frame
 
     def __append(self, frame: list) -> list:
-        """Apends the frame with the ETX."""
+        """Apends the frame with the ETX.
+        
+        Args:
+            frame (list): command frame to append to
+        
+        Returns:
+            list: frame with appended info
+        """
         return frame + ["\x03"]  # ETX
 
     def __bcc_calc(self, command: list) -> int:
-        """Calculates the BCC of the command."""
+        """Calculates the BCC of the command.
+        
+        Args:
+            command (list): characters to use to find BCC
+        
+        Returns:
+            int: BCC calculation
+        """
         bcc = 0
         for i in range(len(command)):
             if i != 0:
-                bcc ^= ord(command[i])  # Take the XOR of all the bytes in the command
+                #  Take the XOR of all the bytes in the command
+                bcc ^= ord(command[i])
         return bcc
 
     def __end_code(self, ret: str):
         """Checks if the end code is 00.
 
         If en error is present, the error name is printed.
+        
+        Args:
+            ret (str): Response from device
+        
+        Returns:
+            str: Error if present, None if no error
         """
         if ret[11] != "0" and ret[13] != "0":  #'00' is the 'Normal Completion' end code
             if ret[11] == "0" and ret[13] == "F":
@@ -213,11 +126,12 @@ class Omron(ABC):
                 print("Unknown Error")
         return
 
-    async def variable_area_write(self, command: str, set_values: float):
+    async def variable_area_write(self, command: str, set_values: float) -> None:
         """Changes set values.
-
-        command describes the action the device should take
-        set_values is the value the variable should be set to.
+        
+        Args:
+            command (str): describes the action the device should take
+            set_values (float): the value the variable should be set to.
         """
         command_data = []
         # Convert every character of the command string to a byte
@@ -229,8 +143,8 @@ class Omron(ABC):
         # The byte lists tracks the characters in the command
         byte_list = (
             ["\x30", "\x31", "\x30", "\x32"]  # MRC  # MRC  # SRC  # SRC
-            + command_data
-            + ["\x30", "\x30"]  # command  # Bit Position  # Bit Position
+            + command_data # command  
+            + ["\x30", "\x30"]  # Bit Position  # Bit Position
         )
         # Add the number of elements to the byte list
         for i, c in enumerate(no_elements):
@@ -313,8 +227,15 @@ class Omron(ABC):
                     f"{self.addresses[byte[0:2]][list(self.addresses[byte[0:2]])[list(self.addresses[byte[0:2]]).index(byte[2:6])+i]]} set"
                 )
 
-    async def variable_area_read(self, command: str):
-        """Reads set values."""
+    async def variable_area_read(self, command: str) -> dict:
+        """Reads set values.
+        
+        Args:
+            command (str): The desired variable
+        
+        Returns:
+            dict: Variable:Value pair
+        """
         command_data = []
         # Convert every character of the command to a byte
         for i, c in enumerate(command):
@@ -322,8 +243,8 @@ class Omron(ABC):
         # The byte lists tracks the characters in the command
         byte_list = (
             ["\x30", "\x31", "\x30", "\x31"]  # MRC  # MRC  # SRC  # SRC
-            + command_data
-            + ["\x30", "\x30"]  # command  # Bit Position  # Bit Position
+            + command_data  # command
+            + ["\x30", "\x30"]  # Bit Position  # Bit Position
         )
         # Reads 1 element per call
         no_elements = ["\x30", "\x30", "\x30", "\x31"]  # '0001'
@@ -409,8 +330,12 @@ class Omron(ABC):
     # This has the right code, but I don't think it recieves the response and translates it back correctly
     # Did we just decde we didn't need it?
     # I haven't been able to test it, I can't get the device to respond (wrong port?)
-    async def controller_status_read(self):
-        """Reads the operating and error status."""
+    async def controller_status_read(self) -> str:
+        """Reads the operating and error status.
+        
+        Returns:
+            str: Response from device
+        """
         byte_list = ["\x30", "\x36", "\x30", "\x31"]
         byte_list = self.__prepend(byte_list)
         byte_list = self.__append(byte_list)
@@ -449,8 +374,15 @@ class Omron(ABC):
         print(f"Result = {bytes.fromhex(ret[30:-4]).decode('ascii')}")
         return
 
-    async def get(self, comm: list):
-        """Gets the current value of the device."""
+    async def get(self, comm: list) -> dict:
+        """Gets the current value of the device.
+        
+        Args:
+            comm (list): List of variables for the device to retrieve
+        
+        Returns:
+            dict: All variable:value pairs for each item in comm
+        """
         # Makes a dictionary to store the results
         ret_dict = {}
         for c in comm:
@@ -463,8 +395,13 @@ class Omron(ABC):
             ret_dict.update(await self.variable_area_read(comm_add))
         return ret_dict
 
-    async def set(self, comm, val):
-        """Sets value of comm to val."""
+    async def set(self, comm: str, val: float) -> None:
+        """Sets value of comm to val.
+        
+        Args:
+            comm (str): Command to change
+            val (float): New value for comm
+        """
         # Search through addresses to find the address for the comm
         for var_type, dict in self.addresses.items():
             for add, command in dict.items():
