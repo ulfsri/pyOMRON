@@ -1,6 +1,5 @@
 {
-# These are all the Variable Type - Address combinations presented in the User Manual
-    addresses : [{
+    "addresses" : [{
         "CE": {
             "0000": "Input Monitor",
             "0001": "Internal Duty Monitor",
@@ -10,7 +9,7 @@
             "0005": "Total Run Time Monitor",
             "0006": "Status",
             "0007": "Heater characteristic of resistance",
-            "0014": "Version",
+            "0014": "Version"
         },
         "8E": {
             "0000": "Input Monitor",
@@ -21,7 +20,7 @@
             "0005": "Total Run Time Monitor",
             "0006": "Status",
             "0007": "Heater characteristic of resistance",
-            "0014": "Version",
+            "0014": "Version"
         },
         "C1": {
             "0000": "Communications Main Setting 1",
@@ -41,7 +40,7 @@
             "000E": "Heater Burnout Threshold",
             "000F": "Heater Characteristic Resistance for Phase Control",
             "0010": "Heater Characteristic Resistance for Optimum Cycle Control",
-            "0011": "Heater Burnout Detection Lower Limit",
+            "0011": "Heater Burnout Detection Lower Limit"
         },
         "81": {
             "0000": "Communications Main Setting 1",
@@ -61,7 +60,7 @@
             "000E": "Heater Burnout Threshold",
             "000F": "Heater Characteristic Resistance for Phase Control",
             "0010": "Heater Characteristic Resistance for Optimum Cycle Control",
-            "0011": "Heater Burnout Detection Lower Limit",
+            "0011": "Heater Burnout Detection Lower Limit"
         },
         "C3": {
             "0000": "Communications Data Length",
@@ -91,7 +90,7 @@
             "0018": "External Duty Input Alarm Operation",
             "0019": "SSR short circuit detection enabled",
             "001A": "SSR open failure detection",
-            "001B": "CT failure detection",
+            "001B": "CT failure detection"
         },
         "83": {
             "0000": "Communications Data Length",
@@ -121,7 +120,7 @@
             "0018": "External Duty Input Alarm Operation",
             "0019": "SSR short circuit detection enabled",
             "001A": "SSR open failure detection",
-            "001B": "CT failure detection",
-        },
+            "001B": "CT failure detection"
+        }
     }]
 }

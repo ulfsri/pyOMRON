@@ -1,5 +1,6 @@
 from typing import Any, Union
 
+import json
 import re
 from abc import ABC
 
@@ -13,12 +14,12 @@ import trio
 
 async def new_device(port: str, id: str = "A", **kwargs: Any):
     """Creates a new device. Chooses appropriate device based on characteristics.
-        
+
     Args:
         **kwargs: Any
 
     Returns:
-        Device: The new device.        
+        Device: The new device.
     """
     if port.startswith("/dev/"):
         device = SerialDevice(port, **kwargs)
@@ -28,10 +29,10 @@ async def new_device(port: str, id: str = "A", **kwargs: Any):
 
 class Omron(ABC):
     """Omron class."""
-    
+
     with open("codes.json") as f:
         codes = json.load(f)
-    commands = codes["addresses"][0]
+    addresses = codes["addresses"][0]
 
     def __init__(
         self, device: SerialDevice, dev_info: dict, id: str = "A", **kwargs: Any
@@ -51,10 +52,10 @@ class Omron(ABC):
 
     def __prepend(self, frame: list) -> list:
         """Prepends the frame with the device id.
-        
+
         Args:
             frame (list): command frame to prepend to
-        
+
         Returns:
             list: frame with prepended info
         """
@@ -69,10 +70,10 @@ class Omron(ABC):
 
     def __append(self, frame: list) -> list:
         """Apends the frame with the ETX.
-        
+
         Args:
             frame (list): command frame to append to
-        
+
         Returns:
             list: frame with appended info
         """
@@ -80,10 +81,10 @@ class Omron(ABC):
 
     def __bcc_calc(self, command: list) -> int:
         """Calculates the BCC of the command.
-        
+
         Args:
             command (list): characters to use to find BCC
-        
+
         Returns:
             int: BCC calculation
         """
@@ -98,10 +99,10 @@ class Omron(ABC):
         """Checks if the end code is 00.
 
         If en error is present, the error name is printed.
-        
+
         Args:
             ret (str): Response from device
-        
+
         Returns:
             str: Error if present, None if no error
         """
@@ -128,7 +129,7 @@ class Omron(ABC):
 
     async def variable_area_write(self, command: str, set_values: float) -> None:
         """Changes set values.
-        
+
         Args:
             command (str): describes the action the device should take
             set_values (float): the value the variable should be set to.
@@ -143,7 +144,7 @@ class Omron(ABC):
         # The byte lists tracks the characters in the command
         byte_list = (
             ["\x30", "\x31", "\x30", "\x32"]  # MRC  # MRC  # SRC  # SRC
-            + command_data # command  
+            + command_data  # command
             + ["\x30", "\x30"]  # Bit Position  # Bit Position
         )
         # Add the number of elements to the byte list
@@ -229,10 +230,10 @@ class Omron(ABC):
 
     async def variable_area_read(self, command: str) -> dict:
         """Reads set values.
-        
+
         Args:
             command (str): The desired variable
-        
+
         Returns:
             dict: Variable:Value pair
         """
@@ -332,7 +333,7 @@ class Omron(ABC):
     # I haven't been able to test it, I can't get the device to respond (wrong port?)
     async def controller_status_read(self) -> str:
         """Reads the operating and error status.
-        
+
         Returns:
             str: Response from device
         """
@@ -376,10 +377,10 @@ class Omron(ABC):
 
     async def get(self, comm: list) -> dict:
         """Gets the current value of the device.
-        
+
         Args:
             comm (list): List of variables for the device to retrieve
-        
+
         Returns:
             dict: All variable:value pairs for each item in comm
         """
@@ -397,7 +398,7 @@ class Omron(ABC):
 
     async def set(self, comm: str, val: float) -> None:
         """Sets value of comm to val.
-        
+
         Args:
             comm (str): Command to change
             val (float): New value for comm
