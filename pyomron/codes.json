@@ -8,7 +8,6 @@
             "0004": "Current Monitor",
             "0005": "Total Run Time Monitor",
             "0006": "Status",
-            "0007": "Heater characteristic of resistance",
             "0014": "Version"
         },
         "8E": {
@@ -19,7 +18,6 @@
             "0004": "Current Monitor",
             "0005": "Total Run Time Monitor",
             "0006": "Status",
-            "0007": "Heater characteristic of resistance",
             "0014": "Version"
         },
         "C1": {

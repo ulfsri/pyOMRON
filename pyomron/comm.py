@@ -14,15 +14,13 @@ from trio_serial import Parity, SerialStream, StopBits
 
 
 class CommDevice(ABC):
-    """Sets up the communication for the a gas card device."""
+    """Sets up the communication for the a OMRON power controller device."""
 
     def __init__(self, timeout: int) -> None:
         """Initializes the serial communication.
 
-        Parameters
-        ----------
-        timeout : int
-            The timeout of the Alicat device.
+        Args:
+            timeout (int): The timeout of the Alicat device.
         """
         self.timeout = timeout
 
@@ -30,10 +28,11 @@ class CommDevice(ABC):
     async def _read(self, len: int) -> Optional[str]:
         """Reads the serial communication.
 
+        Args:
+            len (int): The length of the serial communication to read. One character if not specified.
+
         Returns:
-        -------
-        str
-            The serial communication.
+            str: The serial communication.
         """
         pass
 
@@ -41,10 +40,8 @@ class CommDevice(ABC):
     async def _write(self, command: str) -> None:
         """Writes the serial communication.
 
-        Parameters
-        ----------
-        command : str
-            The serial communication.
+        Args:
+            command (str): The serial communication.
         """
         pass
 
@@ -58,9 +55,7 @@ class CommDevice(ABC):
         """Reads the serial communication until end-of-line character reached.
 
         Returns:
-        -------
-        str
-            The serial communication.
+            str: The serial communication.
         """
         pass
 
@@ -68,9 +63,8 @@ class CommDevice(ABC):
     async def _write_readline(self, command: str) -> Optional[str]:
         """Writes the serial communication and reads the response until end-of-line character reached.
 
-        Parameters:
-            command (str):
-                The serial communication.
+        Args:
+            command (str): The serial communication.
 
         Returns:
             str: The serial communication.
@@ -79,7 +73,7 @@ class CommDevice(ABC):
 
 
 class SerialDevice(CommDevice):
-    """Sets up the communication for the a gas card device using serial protocol."""
+    """Sets up the communication for the a OMRON power controller device using serial protocol."""
 
     def __init__(  # Need to verify Flow Control is set to 'none'
         self,
@@ -95,14 +89,16 @@ class SerialDevice(CommDevice):
     ):
         """Initializes the serial communication.
 
-        Parameters
-        ----------
-        port : str
-            The port to which the gas card device is connected.
-        baudrate : int
-            The baudrate of the gas card device.
-        timeout : int
-            The timeout of the gas card device in ms.
+        Args:
+            port (str): The port to which the device is connected.
+            baudrate (int): The baudrate of the device.
+            timeout (int): The timeout of the device in ms.
+            databits (int): The number of data bits.
+            parity (Parity): The parity of the device.
+            stopbits (StopBits): The of stop bits. Usually 1 or 2.
+            xonxoff (bool): Whether the port uses xonxoff.
+            rtscts (bool): Whether the port uses rtscts.
+            exclusive (bool): Whether the port is exclusive.
         """
         super().__init__(timeout)
 
@@ -118,40 +114,50 @@ class SerialDevice(CommDevice):
             "xonxoff": xonxoff,
             "rtscts": rtscts,
         }
+        self.isOpen = False
         self.ser_devc = SerialStream(**self.serial_setup)
 
     async def _read(self, len: int = 1) -> ByteString:
         """Reads the serial communication.
 
+        Args:
+            len (int): The length of the serial communication to read. One character if not specified.
+
         Returns:
-        -------
-        ByteString
-            The serial communication.
+            ByteString: The serial communication.
         """
-        with trio.move_on_after(self.timeout / 1000):
-            return await self.ser_devc.receive_some(len)
+        if not self.isOpen:
+            async with self.ser_devc:
+                with trio.move_on_after(self.timeout / 1000):
+                    return await self.ser_devc.receive_some(len)
+        else:
+            with trio.move_on_after(self.timeout / 1000):
+                return await self.ser_devc.receive_some(len)
         return None
 
     async def _write(self, command: str) -> None:
         """Writes the serial communication.
 
-        Parameters
-        ----------
-        command : str
-            The serial communication.
+        Args:
+            command (str): The serial communication.
         """
-        with trio.move_on_after(self.timeout / 1000):
-            await self.ser_devc.send_all(command)
+        if not self.isOpen:
+            async with self.ser_devc:
+                with trio.move_on_after(self.timeout / 1000):
+                    await self.ser_devc.send_all(command)
+        else:
+            with trio.move_on_after(self.timeout / 1000):
+                await self.ser_devc.send_all(command)
+        return None
 
     async def _readline(self) -> str:
         """Reads the serial communication until end-of-line character reached.
 
         Returns:
-        -------
-        str
-            The serial communication.
+            str: The serial communication.
         """
         async with self.ser_devc:
+            self.isOpen = True
             line = bytearray()
             while True:
                 c = None
@@ -162,17 +168,20 @@ class SerialDevice(CommDevice):
                         break
                 if c is None:
                     break
+        self.isOpen = False
         return line.decode("ascii")
 
     async def _write_readall(self, command: str) -> list:
         """Write command and read until timeout reached.
 
+        Args:
+            command (str): The serial communication.
+
         Returns:
-        -------
-        str
-            The serial communication.
+            list: List of lines read from the device.
         """
         async with self.ser_devc:
+            self.isOpen = True
             await self._write(command)
             line = bytearray()
             arr_line = []
@@ -180,7 +189,6 @@ class SerialDevice(CommDevice):
                 c = None
                 with trio.move_on_after(self.timeout / 1000):
                     c = await self._read(1)
-
                     if c == self.eol:
                         arr_line.append(line)
                         line = bytearray()
@@ -188,19 +196,20 @@ class SerialDevice(CommDevice):
                         line += c
                 if c is None:
                     break
+        self.isOpen = False
         return line
 
     async def _write_readline(self, command: str) -> str:
         """Writes the serial communication and reads the response until end-of-line character reached.
 
         Parameters:
-            command (str):
-                The serial communication.
+            command (str): The serial communication.
 
         Returns:
             str: The serial communication.
         """
         async with self.ser_devc:
+            self.isOpen = True
             await self._write(command)
             line = bytearray()
             while True:
@@ -223,8 +232,10 @@ class SerialDevice(CommDevice):
 
     async def close(self) -> None:
         """Closes the serial communication."""
+        self.isOpen = False
         await self.ser_devc.aclose()
 
     async def open(self) -> None:
         """Opens the serial communication."""
+        self.isOpen = True
         await self.ser_devc.aopen()
