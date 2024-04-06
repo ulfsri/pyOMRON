@@ -1,0 +1,65 @@
+site_name: ""
+
+theme:
+  name: material
+  logo: assets/images/logo_pyalicat.svg
+  favicon: assets/images/logo_round_simp.svg
+  custom_dir: docs/overrides
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+    - navigation.indexes
+    - navigation.path
+    - navigation.tabs
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.tooltips
+    - content.code.select
+    - content.code.annotation
+    - content.code.copy
+  language: en
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to dark mode
+      primary: black
+      accent: red
+    - scheme: slate
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode
+      primary: black
+      accent: red
+repo_name: ulfsri/pyomron
+repo_url: https://github.com/ulfsri/pyomron
+plugins:
+- search
+- mkdocstrings
+nav:
+  - Home: index.md
+  - Code Reference:
+    - Device: device-reference.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - admonition
+  - pymdownx.arithmatex:
+      generic: true
+  - footnotes
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.mark
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+extra_css:
+  - stylesheets/extra.css
+copyright: |
+  &copy; 2024 <a href="https://github.com/ulfsri"  target="_blank" rel="noopener">FSRI</a>
