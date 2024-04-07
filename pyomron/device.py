@@ -145,6 +145,8 @@ class Omron(ABC):
     ) -> None:
         """Changes set values.
 
+        Automatically handles if multiple consecutive addresses are being written to.
+
         Args:
             var_addr (str): The desired variable type and starting address
             set_values (float | list): The value the variable should be set to.
@@ -365,7 +367,7 @@ class Omron(ABC):
                     if c == command:
                         comm_add = var_type + add
             # Calls read and adds the result to the dictionary
-            ret_dict.update(await self.variable_area_read(comm_add))
+            ret_dict.update(await self._variable_area_read(comm_add))
         return ret_dict
 
     async def set(self, comm: str | list, val: float | list) -> None:
@@ -373,6 +375,7 @@ class Omron(ABC):
 
         Todo:
             * Make this accept a dictionary instead to write to multiple values at once
+            * Could also smartly manage writing if multiple sequential addresses are requested by using one call to variable_area_write() with necessary length but this is low priority because it's not likely we would run into this scenario often
 
         Args:
             comm (str | list): Command to change
@@ -387,5 +390,5 @@ class Omron(ABC):
                 for add, command in dict.items():
                     if c == command:
                         comm_add = var_type + add
-            await self.variable_area_write(comm_add, val[i])  # Sets the value
+            await self._variable_area_write(comm_add, val[i])  # Sets the value
         return
