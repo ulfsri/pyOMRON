@@ -28,11 +28,7 @@ async def new_device(port: str, **kwargs: Any):
 
 
 class Omron(ABC):
-    """Omron class.
-
-    Todo:
-        * Add function for controller attribute read
-    """
+    """Omron class."""
 
     with open("codes.json") as f:
         codes = json.load(f)
@@ -47,6 +43,7 @@ class Omron(ABC):
             **kwargs: Additional keyword arguments.
         """
         self._device = device
+        self._device_info = None
 
     async def _prepend(self, frame: list) -> list:
         """Prepends the frame with the device id.
@@ -143,21 +140,23 @@ class Omron(ABC):
             print(response_codes.get(bytes(response_code), "Unknown Error"))
         return
 
-    async def variable_area_write(self, command: str, set_values: float | list) -> None:
+    async def _variable_area_write(
+        self, var_addr: str, set_values: float | list
+    ) -> None:
         """Changes set values.
 
         Args:
-            command (str): The desired variable type and starting address
+            var_addr (str): The desired variable type and starting address
             set_values (float | list): The value the variable should be set to.
         """
         if isinstance(set_values, list):
-            leng = len(set_values)  # Number of elements to write
+            num_elem = len(set_values)  # Number of elements to write
         else:
-            leng = 1
+            num_elem = 1
             set_values = [set_values]  # Convert to list if not already
         command_data = []
 
-        for i, c in enumerate(command):
+        for i, c in enumerate(var_addr):
             command_data.append(c)  # Add each byte to the command_data list
 
         # Builds beginning portion of the FINS-mini command
@@ -168,22 +167,27 @@ class Omron(ABC):
         )
 
         # Add the number of elements to the FINS-mini command
-        leng = f"{hex(leng)[2:]:0>4}".upper()  # Converts the number of elements to hex
-        for i, c in enumerate(leng):
+        num_elem = (
+            f"{hex(num_elem)[2:]:0>4}".upper()
+        )  # Converts the number of elements to hex string
+        for i, c in enumerate(num_elem):
             byte_list.append(c)
 
         # Add the set values to the FINS-mini command
         for i, set_value in enumerate(set_values):
             # Checks for 'Status', 'Version', or 'Heater Burnout Threshold' commands
             # TODO: This 'if' statement needs to check for all addresses that are being written to, the command variable just stores the starting address
+            # Or maybe we need to come up with a better system for doing this. It could be done in the set() function by the address name and then passed to the write function with the value appropriately scaled
             if (
-                command[1] == "E" and (int(command[5]) != 6 or int(command[4:5]) != 14)
-            ) or (command[1] == "1" and int(command[5], 16) != 14):
+                var_addr[1] == "E"
+                and (int(var_addr[5]) != 6 or int(var_addr[4:5]) != 14)
+            ) or (var_addr[1] == "1" and int(var_addr[5], 16) != 14):
                 set_value = int(float(set_value * 10))
 
-            if command[0] == "C":  # 8 bytes
+            # Converts the set value to a hex string
+            if var_addr[0] == "C":  # 8 bytes
                 set_value = f"{hex(set_value)[2:]:0>8}".upper()
-            else:  # 4 bytes
+            elif var_addr[0] == "8":  # 4 bytes
                 set_value = f"{hex(set_value)[2:]:0>4}".upper()
             for i, c in enumerate(set_value):
                 byte_list.append(c)
@@ -195,25 +199,26 @@ class Omron(ABC):
         byte = bytes("".join(byte_list), "ascii")
         byte += bytes([await self._bcc_calc(byte_list)])
 
-        ret = await self._device._write_readline(byte)
+        resp = await self._device._write_readline(byte)
 
-        await self._check_end_code(ret)
-        await self._check_response_code(ret)
+        await self._check_end_code(resp)
+        await self._check_response_code(resp)
 
         return
 
-    async def variable_area_read(self, command: str, leng: int = 1) -> dict:
+    async def _variable_area_read(self, var_addr: str, num_elem: int = 1) -> dict:
         """Reads set values.
 
         Args:
-            command (str): The desired variable type and starting address
-            leng (int): The number of elements to read. Defaults to 1.
+            var_addr (str): The desired variable type and starting address
+            num_elem (int): The number of elements to read. Defaults to 1.
 
         Returns:
             dict: Variable:Value pair for each variable read
         """
         command_data = []
-        for i, c in enumerate(command):
+        ret_dict = {}
+        for i, c in enumerate(var_addr):
             command_data.append(c)  # Add each byte to the command_data list
 
         # Builds beginning portion of the FINS-mini command
@@ -224,8 +229,10 @@ class Omron(ABC):
         )
 
         # Add the number of elements to the FINS-mini command
-        leng = f"{hex(leng)[2:]:0>4}".upper()  # Converts the number of elements to hex
-        for i, c in enumerate(leng):
+        num_elem = (
+            f"{hex(num_elem)[2:]:0>4}".upper()
+        )  # Converts the number of elements to hex
+        for i, c in enumerate(num_elem):
             byte_list.append(c)
 
         # Build the communication frame
@@ -235,51 +242,75 @@ class Omron(ABC):
         byte = bytes("".join(byte_list), "ascii")
         byte += bytes([await self._bcc_calc(byte_list)])
 
-        ret = await self._device._write_readline(byte)
+        resp = await self._device._write_readline(byte)
 
-        await self._check_end_code(ret)
-        await self._check_response_code(ret)
+        await self._check_end_code(resp)
+        await self._check_response_code(resp)
 
-        print_dict = {}
-        ret = ret[15:-2]  # Removes everything but the set values from the response
+        resp = resp[15:-2]  # Removes everything but the set values from the response
 
-        # Get metadata from the return
+        # Get metadata from the return. Questionable if we need this because it's given in the function call
         var_type = byte[10:12].decode("ascii")  # Variable type read from
         read_start = int(byte[12:16], 16)  # Address to start reading from
-        no_elements = int(byte[18:22], 16)  # Number of elements to read
+        num_elem = int(byte[18:22], 16)  # Number of elements to read
 
         # Fill in the dictionary with the address: value pairs
-        for i in range(no_elements):  # Loop through the each of the elements read
+        for i in range(num_elem):  # Loop through the each of the elements read
             addr = f"{hex(read_start + i)[2:]:0>4}".upper()  # Address of the element
             if var_type[0] == "C":  # The 8 bit case
-                print_dict[self.addresses[var_type][addr]] = ret[
+                ret_dict[self.addresses[var_type][addr]] = resp[
                     0 + 8 * i : 8 + 8 * i
                 ].decode("ascii")
             elif var_type[0] == "8":  # The 4 bit case
-                print_dict[self.addresses[var_type][addr]] = ret[
+                ret_dict[self.addresses[var_type][addr]] = resp[
                     0 + 4 * i : 4 + 4 * i
                 ].decode("ascii")
             else:
                 print("Error in Variable Type")
 
-        return print_dict
+        return ret_dict
 
-    async def controller_status_read(self) -> str:
-        """Reads the operating and error status.
-
-        Todo:
-            * Make this function actually return the status instead of just bytearray
+    async def controller_attribute_read(self) -> str:
+        """Reads the controller attribute.
 
         Returns:
             str: Response from device
         """
-        byte_list = ["\x30", "\x36", "\x30", "\x31"]
+        byte_list = [
+            "\x30",
+            "\x35",
+            "\x30",
+            "\x33",
+        ]  # Command for controller attribute read
         byte_list = await self._prepend(byte_list)
         byte_list = await self._append(byte_list)
         byte = bytes("".join(byte_list), "ascii")
         byte += bytes([await self._bcc_calc(byte_list)])
-        ret = await self._device._write_readall(byte)
-        await self._check_response_code(ret)
+        resp = await self._device._write_readline(byte)
+        await self._check_response_code(resp)
+        ret = resp[15:-6].decode("ascii")
+        self._device_info = ret
+        return ret
+
+    async def controller_status_read(self) -> str:
+        """Reads the operating and error status.
+
+        Returns:
+            str: Response from device
+        """
+        byte_list = [
+            "\x30",
+            "\x36",
+            "\x30",
+            "\x31",
+        ]  # Command for controller status read
+        byte_list = await self._prepend(byte_list)
+        byte_list = await self._append(byte_list)
+        byte = bytes("".join(byte_list), "ascii")
+        byte += bytes([await self._bcc_calc(byte_list)])
+        resp = await self._device._write_readline(byte)
+        await self._check_response_code(resp)
+        ret = resp[15:-4].decode("ascii")
         return ret
 
     async def echo_back_test(self, test_input: int = 0) -> None:
@@ -305,12 +336,12 @@ class Omron(ABC):
         byte = bytes("".join(byte_list), "ascii")
 
         byte += bytes([await self._bcc_calc(byte_list)])
-        ret = await self._device._write_readline(byte)
-        await self._check_end_code(ret)
-        ret = ret.hex()
-        if ret[23] != "0" or ret[25] != "0" or ret[27] != "0" or ret[29] != "0":
+        resp = await self._device._write_readline(byte)
+        await self._check_end_code(resp)
+        resp = resp.hex()
+        if resp[23] != "0" or resp[25] != "0" or resp[27] != "0" or resp[29] != "0":
             print("Error occured")
-        print(f"Result = {bytes.fromhex(ret[30:-4]).decode('ascii')}")
+        print(f"Result = {bytes.fromhex(resp[30:-4]).decode('ascii')}")
         return
 
     async def get(self, comm: list) -> dict:
