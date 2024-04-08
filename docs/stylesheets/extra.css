@@ -1,11 +1,11 @@
 .md-header__button.md-logo {
-  margin-top: 0;
+  margin-top: 5;
   margin-bottom: 0;
-  padding-top: 0;
+  padding-top: 5;
   padding-bottom: 0;
 }
 
 .md-header__button.md-logo img,
 .md-header__button.md-logo svg {
-  transform: scale(3.0)
+  transform: scale(2.0)
 }

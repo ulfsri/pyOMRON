@@ -1,5 +1,5 @@
 # pyOMRON
-![pyOMRON](assets/images/logo_pyalicat.svg)
+![pyOMRON](assets/images/logo_pyomron.svg)
 
 <div align="center">
 <a href="https://pypi.org/project/pyomron" target="_blank">

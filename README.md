@@ -1,4 +1,5 @@
 # pyOMRON
+![pyOMRON](assets/images/logo_pyomron.svg)
 
 <div align="center">
 

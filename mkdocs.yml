@@ -2,7 +2,7 @@ site_name: ""
 
 theme:
   name: material
-  logo: assets/images/logo_pyalicat.svg
+  logo: assets/images/logo_pyomron.svg
   favicon: assets/images/logo_round_simp.svg
   custom_dir: docs/overrides
   features:
