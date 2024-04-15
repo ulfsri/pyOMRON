@@ -33,6 +33,8 @@ class Omron(ABC):
     with open("codes.json") as f:
         codes = json.load(f)
     addresses = codes["addresses"][0]
+    C383_notation = codes["C383_notation"][0]
+    status_labels = codes["status_labels"]
 
     def __init__(self, device: SerialDevice, **kwargs: Any) -> None:
         """Initializes the Device object.
@@ -87,6 +89,21 @@ class Omron(ABC):
         for byte in frame[1:]:
             bcc ^= ord(byte)  # Take the XOR of all the bytes in the frame
         return bcc
+
+    async def _comm_frame(self, frame: list) -> bytes:
+        """Builds the communication frame.
+
+        Args:
+            frame (list): Command frame to build
+
+        Returns:
+            list: Communication frame
+        """
+        byte_list = await self._prepend(frame)
+        byte_list = await self._append(byte_list)
+        byte = bytes("".join(byte_list), "ascii")
+        byte += bytes([await self._bcc_calc(byte_list)])
+        return byte
 
     async def _check_end_code(self, ret: bytearray):
         """Checks if the end code is 00.
@@ -195,11 +212,7 @@ class Omron(ABC):
                 byte_list.append(c)
 
         # Build the communication frame
-        # TODO: Can we wrap these prepend, appends, and bcc_calc into a single function?
-        byte_list = await self._prepend(byte_list)
-        byte_list = await self._append(byte_list)
-        byte = bytes("".join(byte_list), "ascii")
-        byte += bytes([await self._bcc_calc(byte_list)])
+        byte = await self._comm_frame(byte_list)
 
         resp = await self._device._write_readline(byte)
 
@@ -238,11 +251,7 @@ class Omron(ABC):
             byte_list.append(c)
 
         # Build the communication frame
-        # TODO: Can we wrap these prepend, appends, and bcc_calc into a single function?
-        byte_list = await self._prepend(byte_list)
-        byte_list = await self._append(byte_list)
-        byte = bytes("".join(byte_list), "ascii")
-        byte += bytes([await self._bcc_calc(byte_list)])
+        byte = await self._comm_frame(byte_list)
 
         resp = await self._device._write_readline(byte)
 
@@ -260,16 +269,72 @@ class Omron(ABC):
         for i in range(num_elem):  # Loop through the each of the elements read
             addr = f"{hex(read_start + i)[2:]:0>4}".upper()  # Address of the element
             if var_type[0] == "C":  # The 8 bit case
-                ret_dict[self.addresses[var_type][addr]] = resp[
-                    0 + 8 * i : 8 + 8 * i
-                ].decode("ascii")
+                ret_dict[self.addresses[var_type][addr]] = int(
+                    resp[0 + 8 * i : 8 + 8 * i].decode("ascii"), 16
+                )
             elif var_type[0] == "8":  # The 4 bit case
-                ret_dict[self.addresses[var_type][addr]] = resp[
-                    0 + 4 * i : 4 + 4 * i
-                ].decode("ascii")
+                ret_dict[self.addresses[var_type][addr]] = int(
+                    resp[0 + 4 * i : 4 + 4 * i].decode("ascii"), 16
+                )
             else:
                 print("Error in Variable Type")
+        # Convert data to readable notation
+        for key, value in ret_dict.items():
+            if var_type[1] in ["E", "1"]:
+                if key == "Version":
+                    ret_dict[key] = value / 100
+                elif key == "Status":
+                    return await self.status(value)
+                elif key == "Heater Burnout Threshold":
+                    ret_dict[key] = value
+                else:
+                    ret_dict[key] = value / 10
+            else:
+                try:
+                    note = self.C383_notation[key][str(value)]
+                except KeyError:
+                    note = None
+                if note:
+                    ret_dict[key] = note
+                elif key in [
+                    "Input Digital Filter Time Constant",
+                    "Load Current Upper Limit",
+                    "Total Run Time Alarm Set Value",
+                ]:
+                    ret_dict[key] = value / 10
+                else:
+                    ret_dict[key] = value
+        return ret_dict
 
+    async def status(self, value: str) -> dict:
+        """Reads the operating and error status from a bit field.
+
+        Returns:
+            dict: Value of each Protection/Error Operation
+        """
+        print(value)
+        e_m = {0: "No Error", 1: "Error"}
+        p_m = {0: "OFF", 1: "ON"}
+        status = ["Q"] * 32
+        for i in range(32):
+            if i in [7, 12, 13, 14, 15]:
+                continue
+            elif i < 16:
+                status[i] = e_m[(value >> i) & 1]
+            elif i == 19:
+                status[i] = (
+                    "Initial Setting Level" if (value >> i) & 1 else "Operation Level"
+                )
+            elif i == 20:
+                status[i] = "Manual" if (value >> i) & 1 else "Automatic"
+            elif i == 21:
+                status[i] = (
+                    "Optimum Cycle Control" if (value >> i) & 1 else "Phase Control"
+                )
+            elif i < 32:
+                status[i] = p_m[(value >> i) & 1]
+        ret_dict = dict(zip(self.status_labels, status))
+        del ret_dict["Not used."]
         return ret_dict
 
     async def controller_attribute_read(self) -> str:
@@ -284,10 +349,7 @@ class Omron(ABC):
             "\x30",
             "\x33",
         ]  # Command for controller attribute read
-        byte_list = await self._prepend(byte_list)
-        byte_list = await self._append(byte_list)
-        byte = bytes("".join(byte_list), "ascii")
-        byte += bytes([await self._bcc_calc(byte_list)])
+        byte = await self._comm_frame(byte_list)
         resp = await self._device._write_readline(byte)
         await self._check_response_code(resp)
         ret = resp[15:-6].decode("ascii")
@@ -306,10 +368,7 @@ class Omron(ABC):
             "\x30",
             "\x31",
         ]  # Command for controller status read
-        byte_list = await self._prepend(byte_list)
-        byte_list = await self._append(byte_list)
-        byte = bytes("".join(byte_list), "ascii")
-        byte += bytes([await self._bcc_calc(byte_list)])
+        byte = await self._comm_frame(byte_list)
         resp = await self._device._write_readline(byte)
         await self._check_response_code(resp)
         ret = resp[15:-4].decode("ascii")
@@ -333,11 +392,7 @@ class Omron(ABC):
             "\x30",
             "\x31",
         ] + test_data  # '0801' is echo-back command
-        byte_list = await self._prepend(byte_list)
-        byte_list = await self._append(byte_list)
-        byte = bytes("".join(byte_list), "ascii")
-
-        byte += bytes([await self._bcc_calc(byte_list)])
+        byte = await self._comm_frame(byte_list)
         resp = await self._device._write_readline(byte)
         await self._check_end_code(resp)
         resp = resp.hex()
@@ -358,6 +413,8 @@ class Omron(ABC):
         Returns:
             dict: All variable:value pairs for each item in comm
         """
+        if not isinstance(comm, list):
+            comm = [comm]
         # Makes a dictionary to store the results
         ret_dict = {}
         for c in comm:
@@ -370,25 +427,33 @@ class Omron(ABC):
             ret_dict.update(await self._variable_area_read(comm_add))
         return ret_dict
 
-    async def set(self, comm: str | list, val: float | list) -> None:
+    async def set(self, comm: dict) -> None:
         """Sets value of comm to val.
 
         Todo:
-            * Make this accept a dictionary instead to write to multiple values at once
             * Could also smartly manage writing if multiple sequential addresses are requested by using one call to variable_area_write() with necessary length but this is low priority because it's not likely we would run into this scenario often
 
         Args:
-            comm (str | list): Command to change
-            val (float | list): New value for comm
+            comm (dict): Command to change in form comm:val
         """
         # Search through addresses to find the address for the comm
-        if not isinstance(comm, list):
-            comm = [comm]
-            val = [val]
-        for i, c in enumerate(comm):
+        for c in list(comm.keys()):
             for var_type, dict in self.addresses.items():
                 for add, command in dict.items():
                     if c == command:
                         comm_add = var_type + add
-            await self._variable_area_write(comm_add, val[i])  # Sets the value
+            for var_type, dict in self.C383_notation.items():
+                for add, command in dict.items():
+                    if comm[c] == command:
+                        comm[c] = add
+            await self._variable_area_write(comm_add, int(comm[c]))  # Sets the value
+        return
+
+    async def heat(self, setpoint: float) -> None:
+        """Convenience: Sets the heater setpoint.
+
+        Args:
+            setpoint (float): The desired setpoint
+        """
+        await self.set({"Communications Main Setting 1": setpoint})
         return

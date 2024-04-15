@@ -120,5 +120,156 @@
             "001A": "SSR open failure detection",
             "001B": "CT failure detection"
         }
-    }]
+    }],
+
+    "C383_notation" : [{
+    "Communications Data Length": {
+        "0": 7,
+        "1": 8
+    },
+    "Communications Stop Bits": {
+        "0": 1,
+        "1": 2
+    },
+    "Communications Parity": {
+        "0": "None",
+        "1": "Even",
+        "2": "Odd"
+    },
+    "Send Wait Time": {
+        "0": ""
+    },
+    "Communications Timeout Time": {
+        "0": "Communications timeout function disabled",
+        "1": ""
+    },
+    "Communications Unit Number": {
+        "0": ""
+    },
+    "Communications Baud Rate": {
+        "0": 9.6,
+        "1": 19.2,
+        "2": 38.4,
+        "3": 57.6
+    },
+    "Communications Main Setting Number": {
+        "0": "Automatic Assignment",
+        "1": "Ch1 control output (heating)", 
+        "2": "Ch2 control output (heating)",
+        "3": "Ch3 control output (heating)",
+        "4": "Ch4 control output (heating)",
+        "5": "Ch1 control output (cooling)",
+        "6": "Ch2 control output (cooling)",
+        "7": "Ch3 control output (cooling)",
+        "8": "Ch4 control output (cooling)"
+    },
+    "External Duty Input Enable/Disable": {
+        "0": "Disable",
+        "1": "Enable"
+    },
+    "Output Mode Selection": {
+        "0": "Proportional to phase angle",
+        "1": "Proportional to square voltage",
+        "2": "Proportional to voltage",
+        "3": "Constant current"
+    },
+    "Input Digital Filter Time Constant": {
+        "0": ""
+    },
+    "Input Signal Type": {
+        "0": "Linear input",
+        "1": "Voltage ON/OFF input"
+    },
+    "Main Setting Automatic Input Selection": {
+        "0": "4 to 20 mA or 1 to 5 VDC",
+        "1": "Communications"
+    },
+    "Main Setting Manual Input Selection": {
+        "0": "External variable resistor input",
+        "1": "Key input"
+    },
+    "Control Method Default": {
+        "0": "Phase control",
+        "1": "Optimum cycle control"
+    },
+    "Main Setting Automatic/Manual Default": {
+        "0": "Automatic",
+        "1": "Manual"
+    },
+    "Number of Alarms for Heater Burnout Detection": {
+        "0": ""
+    },
+    "Load Current Upper Limit": {
+        "0": "Function disabled",
+        "1": ""
+    },
+    "Event Input Assignment": {
+        "0": "No assignment",
+        "1": "Control method selection",
+        "2": "Main setting automatic/manual selection"
+    },
+    "Alarm Output Open in Alarm": {
+        "0": "Close in alarm",
+        "1": "Open in alarm"
+    },
+    "Heater Burnout Alarm Operation": {
+        "0": "Disable",
+        "1": "Alarm level 1 (fatal error)",
+        "2": "Alarm level 2 (nonfatal error)"
+    },
+    "Total Run Time Exceeded Alarm Operation": {
+        "0": "Disable",
+        "1": "Alarm level 1 (fatal error)",
+        "2": "Alarm level 2 (nonfatal error)"
+    },
+    "Total Run Time Alarm Set Value": {
+        "0": "Function disabled",
+        "1": ""
+    },
+    "External Input Range Alarm Operation": {
+        "0": "Disable",
+        "1": "Alarm level 1 (fatal error)",
+        "2": "Alarm level 2 (nonfatal error)"
+    },
+    "External Duty Input Alarm Operation": {
+        "0": "Disable",
+        "1": "Alarm level 1 (fatal error)",
+        "2": "Alarm level 2 (nonfatal error)"
+    }
+    }],
+
+    "status_labels" : [
+        "SSR Short-circuit",
+        "SSR Open Failure",
+        "CT Failure",
+        "Heater Overcurrent",
+        "Zero Cross Error",
+        "Frequency Error",
+        "Heater Burnout",
+        "Not used.",
+        "External Input Range Alarm",
+        "External Duty Input Alarm",
+        "Total Run Time Alarm",
+        "Communications Timeout",
+        "Not used.",
+        "Not used.",
+        "Not used.",
+        "Not used.",
+        "Alarm Output 1",
+        "Alarm Output 2",
+        "Event Input",
+        "Setting Level",
+        "Main Setting Automatic Manual Selection",
+        "Control method",
+        "Not used.",
+        "Not used.",
+        "Not used.",
+        "Not used.",
+        "Not used.",
+        "Not used.",
+        "Not used.",
+        "Not used.",
+        "Not used.",
+        "Not used."
+    ]
 }
