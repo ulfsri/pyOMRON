@@ -233,6 +233,7 @@ class Omron(ABC):
         """
         command_data = []
         ret_dict = {}
+
         for i, c in enumerate(var_addr):
             command_data.append(c)  # Add each byte to the command_data list
 
@@ -243,14 +244,13 @@ class Omron(ABC):
             + ["\x30", "\x30"]  # Bit Position  # Bit Position
         )
 
+        # Converts the number of elements to hex
+        num_elem = f"{hex(num_elem)[2:]:0>4}".upper()
         # Add the number of elements to the FINS-mini command
-        num_elem = (
-            f"{hex(num_elem)[2:]:0>4}".upper()
-        )  # Converts the number of elements to hex
         for i, c in enumerate(num_elem):
             byte_list.append(c)
 
-        # Build the communication frame
+        # Build the communication frame, prepends and appends
         byte = await self._comm_frame(byte_list)
 
         resp = await self._device._write_readline(byte)
@@ -312,7 +312,6 @@ class Omron(ABC):
         Returns:
             dict: Value of each Protection/Error Operation
         """
-        print(value)
         e_m = {0: "No Error", 1: "Error"}
         p_m = {0: "OFF", 1: "ON"}
         status = ["Q"] * 32
@@ -417,14 +416,47 @@ class Omron(ABC):
             comm = [comm]
         # Makes a dictionary to store the results
         ret_dict = {}
+        comm_list = []
         for c in comm:
             # Search through addresses to find the address for the comm
             for var_type, dict in self.addresses.items():
                 for add, command in dict.items():
                     if c == command:
                         comm_add = var_type + add
+                        if comm_add == "8E0006":
+                            comm_add = "CE0006"
+                        if (
+                            "8" + comm_add[1:] not in comm_list
+                            and "C" + comm_add[1:] not in comm_list
+                        ):
+                            comm_list.append(comm_add)
             # Calls read and adds the result to the dictionary
-            ret_dict.update(await self._variable_area_read(comm_add))
+        comm_list.sort()
+        # print(comm_list)
+        i = 0
+        while i <= len(comm_list) - 1:
+            k = 1
+            # print(f"Looking from: {hex(int(comm_list[i], 16))[2:].upper()}")
+            for j in range(8):
+                if hex(int(comm_list[i], 16) + j)[2:].upper() in comm_list:
+                    # print("Found: " + hex(int(comm_list[i], 16) + j)[2:].upper())
+                    idx = comm_list.index(hex(int(comm_list[i], 16) + j)[2:].upper())
+                    k = j + 1
+            # print(f"Calling read with {comm_list[i]}, length {k}")
+            ret_dict.update(await self._variable_area_read(comm_list[i], k))
+            if k > 1:
+                i = idx
+            i += 1
+        for c in list(ret_dict.keys()):
+            if c not in comm and c not in self.status_labels:
+                del ret_dict[c]
+        if (
+            "Status" not in comm
+            and len(comm) != len(ret_dict)
+            or "Status" in comm
+            and len(comm) != len(ret_dict) - 16
+        ):
+            print(f"Error: Not all values were read.")
         return ret_dict
 
     async def set(self, comm: dict) -> None:
@@ -457,3 +489,11 @@ class Omron(ABC):
         """
         await self.set({"Communications Main Setting 1": setpoint})
         return
+
+    async def monitors(self) -> dict:
+        """Convenience: Gets the current monitor values.
+
+        Args:
+            setpoint (float): The desired setpoint
+        """
+        return await self._variable_area_read("810000", 8)

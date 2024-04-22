@@ -1,15 +1,5 @@
 {
     "addresses" : [{
-        "CE": {
-            "0000": "Input Monitor",
-            "0001": "Internal Duty Monitor",
-            "0002": "Output Monitor",
-            "0003": "Phase Angle Monitor",
-            "0004": "Current Monitor",
-            "0005": "Total Run Time Monitor",
-            "0006": "Status",
-            "0014": "Version"
-        },
         "8E": {
             "0000": "Input Monitor",
             "0001": "Internal Duty Monitor",
@@ -20,25 +10,15 @@
             "0006": "Status",
             "0014": "Version"
         },
-        "C1": {
-            "0000": "Communications Main Setting 1",
-            "0001": "Communications Main Setting 2",
-            "0002": "Communications Main Setting 3",
-            "0003": "Communications Main Setting 4",
-            "0004": "Communications Main Setting 5",
-            "0005": "Communications Main Setting 6",
-            "0006": "Communications Main Setting 7",
-            "0007": "Communications Main Setting 8",
-            "0008": "Internal Duty Setting",
-            "0009": "Base-Up Value",
-            "000A": "Soft-start Up Time",
-            "000B": "Soft-start Down Time",
-            "000C": "Output Upper Limit",
-            "000D": "Output Lower Limit",
-            "000E": "Heater Burnout Threshold",
-            "000F": "Heater Characteristic Resistance for Phase Control",
-            "0010": "Heater Characteristic Resistance for Optimum Cycle Control",
-            "0011": "Heater Burnout Detection Lower Limit"
+        "CE": {
+            "0000": "Input Monitor",
+            "0001": "Internal Duty Monitor",
+            "0002": "Output Monitor",
+            "0003": "Phase Angle Monitor",
+            "0004": "Current Monitor",
+            "0005": "Total Run Time Monitor",
+            "0006": "Status",
+            "0014": "Version"
         },
         "81": {
             "0000": "Communications Main Setting 1",
@@ -60,7 +40,27 @@
             "0010": "Heater Characteristic Resistance for Optimum Cycle Control",
             "0011": "Heater Burnout Detection Lower Limit"
         },
-        "C3": {
+        "C1": {
+            "0000": "Communications Main Setting 1",
+            "0001": "Communications Main Setting 2",
+            "0002": "Communications Main Setting 3",
+            "0003": "Communications Main Setting 4",
+            "0004": "Communications Main Setting 5",
+            "0005": "Communications Main Setting 6",
+            "0006": "Communications Main Setting 7",
+            "0007": "Communications Main Setting 8",
+            "0008": "Internal Duty Setting",
+            "0009": "Base-Up Value",
+            "000A": "Soft-start Up Time",
+            "000B": "Soft-start Down Time",
+            "000C": "Output Upper Limit",
+            "000D": "Output Lower Limit",
+            "000E": "Heater Burnout Threshold",
+            "000F": "Heater Characteristic Resistance for Phase Control",
+            "0010": "Heater Characteristic Resistance for Optimum Cycle Control",
+            "0011": "Heater Burnout Detection Lower Limit"
+        },
+        "83": {
             "0000": "Communications Data Length",
             "0001": "Communications Stop Bits",
             "0002": "Communications Parity",
@@ -90,7 +90,7 @@
             "001A": "SSR open failure detection",
             "001B": "CT failure detection"
         },
-        "83": {
+        "C3": {
             "0000": "Communications Data Length",
             "0001": "Communications Stop Bits",
             "0002": "Communications Parity",
