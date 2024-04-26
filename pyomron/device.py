@@ -309,6 +309,9 @@ class Omron(ABC):
     async def status(self, value: str) -> dict:
         """Reads the operating and error status from a bit field.
 
+        Args:
+            value (str): The bit field to read from
+
         Returns:
             dict: Value of each Protection/Error Operation
         """
