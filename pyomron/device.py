@@ -11,22 +11,6 @@ from trio import run
 import trio
 
 
-async def new_device(port: str, **kwargs: Any):
-    """Creates a new device. Chooses appropriate device based on characteristics.
-
-    Args:
-        port (str): The port to connect to.
-        **kwargs: Any
-
-    Returns:
-        Device: The new device.
-    """
-    if port.startswith("/dev/"):
-        device = SerialDevice(port, **kwargs)
-
-    return Omron(device, **kwargs)
-
-
 class Omron(ABC):
     """Omron class."""
 
@@ -47,7 +31,40 @@ class Omron(ABC):
         self._device = device
         self._device_info = None
 
-    async def _prepend(self, frame: list) -> list:
+    @classmethod
+    async def new_device(cls, port: str, **kwargs: Any):
+        """Creates a new device. Chooses appropriate device based on characteristics.
+
+        Args:
+            port (str): The port to connect to.
+            **kwargs: Any
+
+        Returns:
+            Device: The new device.
+        """
+        if port.startswith("/dev/"):
+            device = SerialDevice(port, **kwargs)
+        byte_list = [
+            "\x30",
+            "\x35",
+            "\x30",
+            "\x33",
+        ]  # Command for controller attribute read
+        byte_list = await cls._prepend(byte_list)
+        byte_list = await cls._append(byte_list)
+        byte = bytes("".join(byte_list), "ascii")
+        byte += bytes([await cls._bcc_calc(byte_list)])
+        resp = await device._write_readline(byte)
+        await cls._check_response_code(resp)
+        ret = resp[15:-6].decode("ascii")
+        # Chek using is_model class to see if it matches G3PW
+        if await cls._is_model(ret):
+            return cls(device, **kwargs)
+        else:
+            raise ValueError("Device is not G3PW")
+
+    @classmethod
+    async def _prepend(cls, frame: list) -> list:
         """Prepends the frame with the device id.
 
         Args:
@@ -65,7 +82,8 @@ class Omron(ABC):
             "\x30",  # SID
         ] + frame
 
-    async def _append(self, frame: list) -> list:
+    @classmethod
+    async def _append(cls, frame: list) -> list:
         """Appends the frame with the ETX.
 
         Args:
@@ -76,7 +94,8 @@ class Omron(ABC):
         """
         return frame + ["\x03"]  # ETX
 
-    async def _bcc_calc(self, frame: list) -> int:
+    @classmethod
+    async def _bcc_calc(cls, frame: list) -> int:
         """Calculates the BCC of the frame.
 
         Args:
@@ -89,6 +108,18 @@ class Omron(ABC):
         for byte in frame[1:]:
             bcc ^= ord(byte)  # Take the XOR of all the bytes in the frame
         return bcc
+
+    @classmethod
+    async def _is_model(cls, model: str) -> bool:
+        """Checks if the device is the correct model.
+
+        Args:
+            model (str): The model to check against
+
+        Returns:
+            bool: True if the model is correct, False otherwise
+        """
+        return model[0:4] == "G3PW"
 
     async def _comm_frame(self, frame: list) -> bytes:
         """Builds the communication frame.
@@ -130,9 +161,11 @@ class Omron(ABC):
         error_code = ret[5:7]
         if error_code != bytes("00", "ascii"):
             print(error_codes.get(bytes(error_code), "Unknown Error"))
+            raise ValueError("Unknown End Code")
         return
 
-    async def _check_response_code(self, ret: bytearray):
+    @classmethod
+    async def _check_response_code(cls, ret: bytearray):
         """Checks if the response code is 0000.
 
         If an error is present, the error name is printed.
@@ -155,6 +188,7 @@ class Omron(ABC):
         response_code = ret[11:15]
         if response_code != bytes("0000", "ascii"):
             print(response_codes.get(bytes(response_code), "Unknown Error"))
+            raise ValueError("Unknown Response Code")
         return
 
     async def _variable_area_write(
@@ -278,6 +312,8 @@ class Omron(ABC):
                 )
             else:
                 print("Error in Variable Type")
+                # raise Exception("Variable Type Error")
+
         # Convert data to readable notation
         for key, value in ret_dict.items():
             if var_type[1] in ["E", "1"]:
@@ -400,6 +436,7 @@ class Omron(ABC):
         resp = resp.hex()
         if resp[23] != "0" or resp[25] != "0" or resp[27] != "0" or resp[29] != "0":
             print("Error occured")
+            # raise Exception("Unknown Error")
         print(f"Result = {bytes.fromhex(resp[30:-4]).decode('ascii')}")
         return
 

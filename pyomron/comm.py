@@ -185,17 +185,17 @@ class SerialDevice(CommDevice):
             await self._write(command)
             line = bytearray()
             arr_line = []
-            while True:
-                c = None
-                with trio.move_on_after(self.timeout / 1000):
+            with trio.move_on_after(self.timeout / 1000):
+                while True:
+                    c = None
                     c = await self._read(1)
                     if c == self.eol:
                         arr_line.append(line)
                         line = bytearray()
                     else:
                         line += c
-                if c is None:
-                    break
+                    if c is None:
+                        break
         self.isOpen = False
         return line
 
@@ -212,9 +212,12 @@ class SerialDevice(CommDevice):
             self.isOpen = True
             await self._write(command)
             line = bytearray()
-            while True:
-                c = None
-                with trio.move_on_after(self.timeout / 1000):
+            c = None
+            while c != b"\x03" and c is not None:
+                c = await self._read(1)
+            with trio.move_on_after(self.timeout / 1000):
+                while True:
+                    c = None
                     c = await self._read(1)
                     if c == b"\x03":
                         line += c
@@ -222,8 +225,8 @@ class SerialDevice(CommDevice):
                         line += c
                         break
                     line += c
-                if c is None:
-                    break
+                    if c is None:
+                        break
         return line
 
     async def _flush(self) -> None:
