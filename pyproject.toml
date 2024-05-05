@@ -4,7 +4,7 @@ requires = ["poetry_core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "pyOMRON"
+name = "pyomron"
 version = "0.0.2"
 description = "Python API for acquisition and control of OMRON G3PW Power Controller."
 readme = "README.md"
