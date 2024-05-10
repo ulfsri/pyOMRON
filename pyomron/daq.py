@@ -31,6 +31,9 @@ class DAQ:
     async def init(cls, devs: dict[str, str] = "") -> "DAQ":
         """Initializes the DAQ.
 
+        Example:
+            Daq = run(DAQ.init, {'A':'/dev/ttyUSB6', 'B':'/dev/ttyUSB7'})
+
         Args:
             devs (dict[str, str]): The dictionary of devices to add. Name:Port
 
@@ -83,6 +86,12 @@ class DAQ:
 
         If id not specified, returns data from all devices.
 
+        Example:
+            df = run(Daq.get, ["Version", "Communications Main Setting 1", "Communications Parity"], ['A', 'B'])
+            df = run(Daq.get, ["Version", "Communications Main Setting 1", "Communications Parity"])
+            df = run(Daq.get, ["Version", "Communications Main Setting 1", "Communications Parity"], 'B')
+            df = run(Daq.get, "Version")
+
         Args:
            val (list[str]): The values to get from the device.
            id (list[str]): The IDs of the devices to read from. If not specified, returns data from all devices.
@@ -107,6 +116,11 @@ class DAQ:
     ) -> dict[str, None]:
         """Sets the data of the device.
 
+        Example:
+            df = run(Daq.set, {"Communications Parity": "Even", 'Output Upper Limit': 100})
+            df = run(Daq.set, {"Communications Parity": "Even", 'Output Upper Limit': 100}, ['A', 'B'])
+            df = run(Daq.set, {"Communications Parity": "Even", 'Output Upper Limit': 100}, ["B"])
+
         Args:
            command (dict[str, str | float]): The commands and their relevant parameters to send to the device.
            id (list[str]): The IDs of the devices to read from. If not specified, returns data from all devices.
@@ -128,6 +142,10 @@ class DAQ:
 
     async def heat(self, setpoint: float, id: str = "") -> dict[str, None]:
         """Convenience: Sets the heater setpoint.
+
+        Example:
+            df = run(Daq.heat, 0.0, ['A', 'B'])
+            df = run(Daq.heat, 0.0)
 
         Args:
             setpoint (float): The desired setpoint
@@ -155,6 +173,10 @@ class DAQ:
 
     async def monitors(self, id: str = "") -> dict[str, dict[str, float]]:
         """Convenience: Gets the current monitor values.
+
+        Example:
+            df = run(Daq.monitors, ['A', 'B'])
+            df = run(Daq.monitors)
 
         Args:
             setpoint (float): The desired setpoint

@@ -35,6 +35,9 @@ class Omron(ABC):
     async def new_device(cls, port: str, **kwargs: Any) -> "Omron":
         """Creates a new device. Chooses appropriate device based on characteristics.
 
+        Example:
+            dev = run(Omron.new_device, "/dev/ttyUSB6")
+
         Args:
             port (str): The port to connect to.
             **kwargs: Any
@@ -445,6 +448,10 @@ class Omron(ABC):
     async def get(self, comm: list[str]) -> dict[str, str | float]:
         """Gets the current value of the device.
 
+        Example:
+            df = run(dev.get, ["Version", "Communications Main Setting 1", "Communications Parity"])
+            df = run(dev.get, "Status")
+
         Args:
             comm (list[str]): List of variables for the device to retrieve
 
@@ -504,6 +511,9 @@ class Omron(ABC):
         Todo:
             * Could also smartly manage writing if multiple sequential addresses are requested by using one call to variable_area_write() with necessary length but this is low priority because it's not likely we would run into this scenario often
 
+        Example:
+            df = run(dev.set, {"Communications Parity": "Odd", 'Output Upper Limit': 100})
+
         Args:
             comm (dict[str, str | float]): Command to change in form comm:val
         """
@@ -523,6 +533,9 @@ class Omron(ABC):
     async def heat(self, setpoint: float) -> None:
         """Convenience: Sets the heater setpoint.
 
+        Example:
+            df = run(dev.heat, 0.0)
+
         Args:
             setpoint (float): The desired setpoint
         """
@@ -531,6 +544,9 @@ class Omron(ABC):
 
     async def monitors(self) -> dict[str, float]:
         """Convenience: Gets the current monitor values.
+
+        Example:
+            df = run(dev.monitors)
 
         Args:
             setpoint (float[str, float]): The desired setpoint
