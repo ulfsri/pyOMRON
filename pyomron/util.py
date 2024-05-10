@@ -11,6 +11,7 @@ from trio import run
 import trio
 import re
 from typing import Any
+import daq
 
 
 def gas_correction():
@@ -24,7 +25,7 @@ def gas_correction():
     pass
 
 
-async def find_devices():
+async def find_devices() -> dict[str, str]:
     """Finds all connected OMRON devices.
 
     Find all available serial ports using the `ls` command
@@ -37,9 +38,7 @@ async def find_devices():
 
 
     Returns:
-    -------
-    list
-        A list of all connected OMRON devices.
+        dict[str, str]: A dictionary of all connected OMRON devices. Port:DeviceType
     """
     # Get the list of available serial ports
     result = glob.glob("/dev/ttyUSB*")
@@ -55,18 +54,14 @@ async def find_devices():
     return devices
 
 
-async def is_omron_device(port, id: str = "A", **kwargs: Any):
+async def is_omron_device(port: str, **kwargs: Any) -> bool:
     """Check if the given port is an OMRON device.
 
     Parameters:
-    ----------
-    port : str
-        The name of the serial port.
+        port(str): The name of the serial port.
 
     Returns:
-    -------
-    bool
-        True if the port is an OMRON device, False otherwise.
+        bool: True if the port is an OMRON device, False otherwise.
     """
     if port.startswith("/dev/"):
         device = SerialDevice(port, **kwargs)
@@ -93,19 +88,42 @@ async def is_omron_device(port, id: str = "A", **kwargs: Any):
         return False
 
 
-def get_device_type(port):
+def get_device_type(port) -> dict[str, str]:
     """Get the device type for the given port.
 
     Parameters:
-    ----------
-    port : str
-        The name of the serial port.
+    port(str): The name of the serial port.
 
     Returns:
-    -------
-    dict
-        A dictionary containing the port name and the type of device on the port.
+        dict[str, str]: A dictionary containing the port name and the type of device on the port.
     """
     # Implement the logic to get the device information
     # You can use any method that suits your needs
     pass
+
+
+async def diagnose():
+    """Run various functions to ensure the device is functioning properly."""
+    get_code1 = "Version"
+    get_code2 = "Internal Duty Setting"
+    set_code = "Output Upper Limit"
+    devs = await find_devices()
+    print(f"Devices: {devs}")
+    Daq = await daq.DAQ.init({"A": list(devs.keys())[0]})
+    print(f"Initiate DAQ with A: {await Daq.dev_list()}")
+    await Daq.add_device({"B": list(devs.keys())[1]})
+    print(f"Add device B: {await Daq.dev_list()}")
+    print(f"Get data (list): {await Daq.get([get_code1, get_code2])}")
+    temp = await Daq.get(set_code, "B")
+    print(f"Get Data (id, no list): Temp = {temp}")
+    await Daq.remove_device(["A"])
+    print(f"Remove device A: {await Daq.dev_list()}")
+    print(f"Set data (with id).")
+    await Daq.set({set_code: (temp["B"][set_code] - 1)}, "B")
+    print(f"Get data: {await Daq.get([set_code])}")
+    print(f"Set data (without id).")
+    await Daq.set({set_code: temp["B"][set_code]})
+    print(f"Get data: {await Daq.get([set_code])}")
+    await Daq.add_device({"C": list(devs.keys())[0]})
+    print(f"Add device C: {await Daq.dev_list()}")
+    print(f"Convenience Function: {await Daq.monitors()}")

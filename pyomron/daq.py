@@ -28,11 +28,11 @@ class DAQ:
         return
 
     @classmethod
-    async def init(cls, devs: dict) -> "DAQ":
+    async def init(cls, devs: dict[str, str] = "") -> "DAQ":
         """Initializes the DAQ.
 
         Args:
-            devs (dict): The dictionary of devices to add. Name:Port
+            devs (dict[str, str]): The dictionary of devices to add. Name:Port
 
         Returns:
             DAQ: The DAQ object.
@@ -41,51 +41,54 @@ class DAQ:
         await daq.add_device(devs)
         return daq
 
-    async def add_device(self, devs: dict) -> None:
+    async def add_device(self, devs: dict[str, str] = "") -> None:
         """Creates and initializes the devices.
 
         Args:
-            devs (dict): The dictionary of devices to add. Name:Port
+            devs (dict[str, str]): The dictionary of devices to add. Name:Port
         """
-        if isinstance(devs, str):
-            devs = devs.split()
-            # This works if the string is the format "Name Port"
-            devs = {devs[0]: devs[1]}
-        for name in devs:
-            dev = await device.Omron.new_device(devs[name])
-            dev_list.update({name: dev})
+        if devs:
+            if isinstance(devs, str):
+                devs = devs.split()
+                # This works if the string is the format "Name Port"
+                devs = {devs[0]: devs[1]}
+            for name in devs:
+                dev = await device.Omron.new_device(devs[name])
+                dev_list.update({name: dev})
         return
 
-    async def remove_device(self, name: list) -> None:
+    async def remove_device(self, name: list[str]) -> None:
         """Creates and initializes the devices.
 
         Args:
-            name (list): The list of devices to remove.
+            name (list[str]): The list of devices to remove.
         """
         for n in name:
             await dev_list[n]._device.close()
             del dev_list[n]
         return
 
-    async def dev_list(self) -> dict:
+    async def dev_list(self) -> dict[str, device.Omron]:
         """Displays the list of devices.
 
         Returns:
-            dict: The list of devices and their objects.
+            dict[str, device.Omron]: The list of devices and their objects.
         """
         return dev_list
 
-    async def get(self, val: list = "", id: list = "") -> dict:
+    async def get(
+        self, val: list[str] = "", id: list[str] = ""
+    ) -> dict[str, dict[str, str | float]]:
         """Gets the data from the device.
 
         If id not specified, returns data from all devices.
 
         Args:
-           val (list): The values to get from the device.
-           id (list): The IDs of the devices to read from. If not specified, returns data from all devices.
+           val (list[str]): The values to get from the device.
+           id (list[str]): The IDs of the devices to read from. If not specified, returns data from all devices.
 
         Returns:
-            dict: The dictionary of devices with the data for each value.
+            dict[str, dict[str, str | float]]: The dictionary of devices with the data for each value.
         """
         ret_dict = {}
         if isinstance(val, str):
@@ -99,15 +102,17 @@ class DAQ:
             ret_dict.update({i: await dev_list[i].get(val)})
         return ret_dict
 
-    async def set(self, command: dict, id: str = "") -> None:
+    async def set(
+        self, command: dict[str, str | float], id: list[str] = ""
+    ) -> dict[str, None]:
         """Sets the data of the device.
 
         Args:
-           command (dict): The commands and their relevant parameters to send to the device.
-           id (list): The IDs of the devices to read from. If not specified, returns data from all devices.
+           command (dict[str, str | float]): The commands and their relevant parameters to send to the device.
+           id (list[str]): The IDs of the devices to read from. If not specified, returns data from all devices.
 
         Returns:
-            dict: The dictionary of devices with the data for each value.
+            dict[str, None]: The dictionary of devices changed.
         """
         ret_dict = {}
         if isinstance(command, str):
@@ -121,11 +126,14 @@ class DAQ:
             ret_dict.update({i: await dev_list[i].set(command)})
         return ret_dict
 
-    async def heat(self, setpoint: float, id: str = "") -> None:
+    async def heat(self, setpoint: float, id: str = "") -> dict[str, None]:
         """Convenience: Sets the heater setpoint.
 
         Args:
             setpoint (float): The desired setpoint
+
+        Returns:
+            dict[str, None]: The dictionary of devices changed.
         """
         ret_dict = {}
         if not id:
@@ -145,11 +153,14 @@ class DAQ:
             )
         return ret_dict
 
-    async def monitors(self, id: str = "") -> dict:
+    async def monitors(self, id: str = "") -> dict[str, dict[str, float]]:
         """Convenience: Gets the current monitor values.
 
         Args:
             setpoint (float): The desired setpoint
+
+        Returns:
+            dict[str, dict[str, float]]: The dictionary of devices with the communication main settings for each.
         """
         ret_dict = {}
         if not id:

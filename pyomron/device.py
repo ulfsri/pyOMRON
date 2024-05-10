@@ -32,7 +32,7 @@ class Omron(ABC):
         self._device_info = None
 
     @classmethod
-    async def new_device(cls, port: str, **kwargs: Any):
+    async def new_device(cls, port: str, **kwargs: Any) -> "Omron":
         """Creates a new device. Chooses appropriate device based on characteristics.
 
         Args:
@@ -64,14 +64,14 @@ class Omron(ABC):
             raise ValueError("Device is not G3PW")
 
     @classmethod
-    async def _prepend(cls, frame: list) -> list:
+    async def _prepend(cls, frame: list[str]) -> list[str]:
         """Prepends the frame with the device id.
 
         Args:
-            frame (list): Command frame to prepend to
+            frame (list[str]): Command frame to prepend to
 
         Returns:
-            list: Frame with prepended info
+            list[str]: Frame with prepended info
         """
         return [
             "\x02",  # STX
@@ -83,23 +83,23 @@ class Omron(ABC):
         ] + frame
 
     @classmethod
-    async def _append(cls, frame: list) -> list:
+    async def _append(cls, frame: list[str]) -> list[str]:
         """Appends the frame with the ETX.
 
         Args:
-            frame (list): Command frame to append to
+            frame (list[str]): Command frame to append to
 
         Returns:
-            list: Frame with appended info
+            list[str]: Frame with appended info
         """
         return frame + ["\x03"]  # ETX
 
     @classmethod
-    async def _bcc_calc(cls, frame: list) -> int:
+    async def _bcc_calc(cls, frame: list[str]) -> int:
         """Calculates the BCC of the frame.
 
         Args:
-            frame (list): List of values in frame to use to find BCC
+            frame (list[str]): List of values in frame to use to find BCC
 
         Returns:
             bcc (int): Calculated BCC
@@ -121,11 +121,11 @@ class Omron(ABC):
         """
         return model[0:4] == "G3PW"
 
-    async def _comm_frame(self, frame: list) -> bytes:
+    async def _comm_frame(self, frame: list[str]) -> bytes:
         """Builds the communication frame.
 
         Args:
-            frame (list): Command frame to build
+            frame (list[str]): Command frame to build
 
         Returns:
             list: Communication frame
@@ -192,7 +192,7 @@ class Omron(ABC):
         return
 
     async def _variable_area_write(
-        self, var_addr: str, set_values: float | list
+        self, var_addr: str, set_values: float | list[float]
     ) -> None:
         """Changes set values.
 
@@ -200,7 +200,7 @@ class Omron(ABC):
 
         Args:
             var_addr (str): The desired variable type and starting address
-            set_values (float | list): The value the variable should be set to.
+            set_values (float | list[float]): The value the variable should be set to.
         """
         if isinstance(set_values, list):
             num_elem = len(set_values)  # Number of elements to write
@@ -255,7 +255,9 @@ class Omron(ABC):
 
         return
 
-    async def _variable_area_read(self, var_addr: str, num_elem: int = 1) -> dict:
+    async def _variable_area_read(
+        self, var_addr: str, num_elem: int = 1
+    ) -> dict[str, str | float]:
         """Reads set values.
 
         Args:
@@ -263,7 +265,7 @@ class Omron(ABC):
             num_elem (int): The number of elements to read. Defaults to 1.
 
         Returns:
-            dict: Variable:Value pair for each variable read
+            dict[str, str | float]: Variable:Value pair for each variable read
         """
         command_data = []
         ret_dict = {}
@@ -342,14 +344,14 @@ class Omron(ABC):
                     ret_dict[key] = value
         return ret_dict
 
-    async def status(self, value: str) -> dict:
+    async def status(self, value: str) -> dict[str, str]:
         """Reads the operating and error status from a bit field.
 
         Args:
             value (str): The bit field to read from
 
         Returns:
-            dict: Value of each Protection/Error Operation
+            dict[str, str]: Value of each Protection/Error Operation
         """
         e_m = {0: "No Error", 1: "Error"}
         p_m = {0: "OFF", 1: "ON"}
@@ -440,17 +442,14 @@ class Omron(ABC):
         print(f"Result = {bytes.fromhex(resp[30:-4]).decode('ascii')}")
         return
 
-    async def get(self, comm: list) -> dict:
+    async def get(self, comm: list[str]) -> dict[str, str | float]:
         """Gets the current value of the device.
 
-        Todo:
-            * Smartly manage reading if multiple sequential addresses are requested by using one call to variable_area_read() with necessary length
-
         Args:
-            comm (list): List of variables for the device to retrieve
+            comm (list[str]): List of variables for the device to retrieve
 
         Returns:
-            dict: All variable:value pairs for each item in comm
+            dict[str, str | float]: All variable:value pairs for each item in comm
         """
         if not isinstance(comm, list):
             comm = [comm]
@@ -499,14 +498,14 @@ class Omron(ABC):
             print(f"Error: Not all values were read.")
         return ret_dict
 
-    async def set(self, comm: dict) -> None:
+    async def set(self, comm: dict[str, str | float]) -> None:
         """Sets value of comm to val.
 
         Todo:
             * Could also smartly manage writing if multiple sequential addresses are requested by using one call to variable_area_write() with necessary length but this is low priority because it's not likely we would run into this scenario often
 
         Args:
-            comm (dict): Command to change in form comm:val
+            comm (dict[str, str | float]): Command to change in form comm:val
         """
         # Search through addresses to find the address for the comm
         for c in list(comm.keys()):
@@ -530,10 +529,10 @@ class Omron(ABC):
         await self.set({"Communications Main Setting 1": setpoint})
         return
 
-    async def monitors(self) -> dict:
+    async def monitors(self) -> dict[str, float]:
         """Convenience: Gets the current monitor values.
 
         Args:
-            setpoint (float): The desired setpoint
+            setpoint (float[str, float]): The desired setpoint
         """
         return await self._variable_area_read("810000", 8)
