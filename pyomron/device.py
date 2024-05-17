@@ -445,7 +445,7 @@ class Omron(ABC):
         print(f"Result = {bytes.fromhex(resp[30:-4]).decode('ascii')}")
         return
 
-    async def get(self, comm: list[str]) -> dict[str, str | float]:
+    async def get(self, comm: list[str] = "") -> dict[str, str | float]:
         """Gets the current value of the device.
 
         Example:
@@ -458,6 +458,8 @@ class Omron(ABC):
         Returns:
             dict[str, str | float]: All variable:value pairs for each item in comm
         """
+        if not comm:
+            return await self.monitors()
         if not isinstance(comm, list):
             comm = [comm]
         # Makes a dictionary to store the results
