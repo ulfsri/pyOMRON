@@ -4,7 +4,8 @@ Author: Grayson Bellamy
 Date: 2024-01-07
 """
 
-import device
+from typing import Any
+from device import Omron
 from trio import run
 
 
@@ -28,14 +29,14 @@ class DAQ:
         return
 
     @classmethod
-    async def init(cls, devs: dict[str, str] = "") -> "DAQ":
+    async def init(cls, devs: dict[str, str | Omron] = "") -> "DAQ":
         """Initializes the DAQ.
 
         Example:
             Daq = run(DAQ.init, {'A':'/dev/ttyUSB6', 'B':'/dev/ttyUSB7'})
 
         Args:
-            devs (dict[str, str]): The dictionary of devices to add. Name:Port
+            devs (dict[str, str | Omron]): The dictionary of devices to add. Name:Port or Name:Device
 
         Returns:
             DAQ: The DAQ object.
@@ -44,11 +45,14 @@ class DAQ:
         await daq.add_device(devs)
         return daq
 
-    async def add_device(self, devs: dict[str, str] = "") -> None:
+    async def add_device(
+        self, devs: dict[str, str | Omron] = "", **kwargs: Any
+    ) -> None:
         """Creates and initializes the devices.
 
         Args:
-            devs (dict[str, str]): The dictionary of devices to add. Name:Port
+            devs (dict[str, str | Omron]): The dictionary of devices to add. Name:Port or Name:Device
+            **kwargs: Any
         """
         if devs:
             if isinstance(devs, str):
@@ -56,8 +60,11 @@ class DAQ:
                 # This works if the string is the format "Name Port"
                 devs = {devs[0]: devs[1]}
             for name in devs:
-                dev = await device.Omron.new_device(devs[name])
-                dev_list.update({name: dev})
+                if isinstance(devs[name], str):
+                    dev = await Omron.new_device(devs[name], **kwargs)
+                    dev_list.update({name: dev})
+                elif isinstance(devs[name], Omron):
+                    dev_list.update({name: devs[name]})
         return
 
     async def remove_device(self, name: list[str]) -> None:
@@ -71,7 +78,7 @@ class DAQ:
             del dev_list[n]
         return
 
-    async def dev_list(self) -> dict[str, device.Omron]:
+    async def dev_list(self) -> dict[str, Omron]:
         """Displays the list of devices.
 
         Returns:

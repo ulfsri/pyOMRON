@@ -25,7 +25,7 @@ def gas_correction():
     pass
 
 
-async def find_devices() -> dict[str, str]:
+async def find_devices() -> dict[str, Omron]:
     """Finds all connected OMRON devices.
 
     Find all available serial ports using the `ls` command
@@ -38,7 +38,7 @@ async def find_devices() -> dict[str, str]:
 
 
     Returns:
-        dict[str, str]: A dictionary of all connected OMRON devices. Port:DeviceType
+        dict[str, Omron]: A dictionary of all connected OMRON devices. Port:Object
     """
     # Get the list of available serial ports
     result = glob.glob("/dev/ttyUSB*")
@@ -54,37 +54,20 @@ async def find_devices() -> dict[str, str]:
     return devices
 
 
-async def is_omron_device(port: str, **kwargs: Any) -> bool:
+async def is_omron_device(port: str, **kwargs: Any) -> bool | tuple[bool, Omron]:
     """Check if the given port is an OMRON device.
 
     Parameters:
         port(str): The name of the serial port.
+        **kwargs: Any additional keyword arguments.
 
     Returns:
         bool: True if the port is an OMRON device, False otherwise.
+        Omron: The OMRON device object.
     """
-    if port.startswith("/dev/"):
-        device = SerialDevice(port, **kwargs)
-    byte_list = [
-        "\x30",
-        "\x35",
-        "\x30",
-        "\x33",
-    ]  # Command for controller attribute read
-    byte_list = await Omron._prepend(byte_list)
-    byte_list = await Omron._append(byte_list)
-    byte = bytes("".join(byte_list), "ascii")
-    byte += bytes([await Omron._bcc_calc(byte_list)])
-    resp = await device._write_readline(byte)
     try:
-        await Omron._check_response_code(resp)
+        return (True, await Omron.new_device(port, **kwargs))
     except ValueError:
-        return False
-    ret = resp[15:-6].decode("ascii")
-    # Chek using is_model class to see if it matches G3PW
-    if await Omron._is_model(ret):
-        return (True, "OMRON")
-    else:
         return False
 
 

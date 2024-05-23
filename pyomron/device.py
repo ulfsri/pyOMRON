@@ -4,8 +4,6 @@ import json
 import re
 from abc import ABC
 
-import trio
-
 from comm import CommDevice, SerialDevice
 from trio import run
 import trio
@@ -58,6 +56,7 @@ class Omron(ABC):
         byte = bytes("".join(byte_list), "ascii")
         byte += bytes([await cls._bcc_calc(byte_list)])
         resp = await device._write_readline(byte)
+        await cls._check_end_code(resp)
         await cls._check_response_code(resp)
         ret = resp[15:-6].decode("ascii")
         # Chek using is_model class to see if it matches G3PW
@@ -139,7 +138,8 @@ class Omron(ABC):
         byte += bytes([await self._bcc_calc(byte_list)])
         return byte
 
-    async def _check_end_code(self, ret: bytearray):
+    @classmethod
+    async def _check_end_code(cls, ret: bytearray):
         """Checks if the end code is 00.
 
         If an error is present, the error name is printed.
@@ -163,8 +163,8 @@ class Omron(ABC):
         }
         error_code = ret[5:7]
         if error_code != bytes("00", "ascii"):
-            print(error_codes.get(bytes(error_code), "Unknown Error"))
-            raise ValueError("Unknown End Code")
+            # print(error_codes.get(bytes(error_code), "Unknown Error"))
+            raise ValueError(f"{error_codes.get(bytes(error_code), "Unknown Error")}")
         return
 
     @classmethod
@@ -190,8 +190,10 @@ class Omron(ABC):
         }
         response_code = ret[11:15]
         if response_code != bytes("0000", "ascii"):
-            print(response_codes.get(bytes(response_code), "Unknown Error"))
-            raise ValueError("Unknown Response Code")
+            # print(response_codes.get(bytes(response_code), "Unknown Error"))
+            raise ValueError(
+                f"{response_codes.get(bytes(response_code), "Unknown Error")}"
+            )
         return
 
     async def _variable_area_write(
@@ -316,8 +318,8 @@ class Omron(ABC):
                     resp[0 + 4 * i : 4 + 4 * i].decode("ascii"), 16
                 )
             else:
-                print("Error in Variable Type")
-                # raise Exception("Variable Type Error")
+                # print("Error in Variable Type")
+                raise ValueError("Variable Type Error")
 
         # Convert data to readable notation
         for key, value in ret_dict.items():
@@ -440,12 +442,14 @@ class Omron(ABC):
         await self._check_end_code(resp)
         resp = resp.hex()
         if resp[23] != "0" or resp[25] != "0" or resp[27] != "0" or resp[29] != "0":
-            print("Error occured")
-            # raise Exception("Unknown Error")
+            # print("Error occured")
+            raise RuntimeError("Unknown Error")
         print(f"Result = {bytes.fromhex(resp[30:-4]).decode('ascii')}")
         return
 
-    async def get(self, comm: list[str] = "") -> dict[str, str | float]:
+    async def get(
+        self, comm: list[str] = "", ignoreError: bool = False
+    ) -> dict[str, str | float]:
         """Gets the current value of the device.
 
         Example:
@@ -454,6 +458,7 @@ class Omron(ABC):
 
         Args:
             comm (list[str]): List of variables for the device to retrieve
+            ignoreError (bool): If False, not finding one value raises an error. If True, everything else returned. Defaults to False.
 
         Returns:
             dict[str, str | float]: All variable:value pairs for each item in comm
@@ -503,8 +508,9 @@ class Omron(ABC):
             and len(comm) != len(ret_dict)
             or "Status" in comm
             and len(comm) != len(ret_dict) - 16
-        ):
-            print(f"Error: Not all values were read.")
+        ) and not ignoreError:
+            # print(f"Error: Not all values were read.")
+            raise KeyError("Not all values were read.")
         return ret_dict
 
     async def set(self, comm: dict[str, str | float]) -> None:
