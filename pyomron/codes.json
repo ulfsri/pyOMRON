@@ -1,275 +1,275 @@
 {
     "addresses" : [{
         "8E": {
-            "0000": "Input Monitor",
-            "0001": "Internal Duty Monitor",
-            "0002": "Output Monitor",
-            "0003": "Phase Angle Monitor",
-            "0004": "Current Monitor",
-            "0005": "Total Run Time Monitor",
+            "0000": "Input_Monitor",
+            "0001": "Internal_Duty_Monitor",
+            "0002": "Output_Monitor",
+            "0003": "Phase_Angle_Monitor",
+            "0004": "Current_Monitor",
+            "0005": "Total_Run_Time_Monitor",
             "0006": "Status",
             "0014": "Version"
         },
         "CE": {
-            "0000": "Input Monitor",
-            "0001": "Internal Duty Monitor",
-            "0002": "Output Monitor",
-            "0003": "Phase Angle Monitor",
-            "0004": "Current Monitor",
-            "0005": "Total Run Time Monitor",
+            "0000": "Input_Monitor",
+            "0001": "Internal_Duty_Monitor",
+            "0002": "Output_Monitor",
+            "0003": "Phase_Angle_Monitor",
+            "0004": "Current_Monitor",
+            "0005": "Total_Run_Time_Monitor",
             "0006": "Status",
             "0014": "Version"
         },
         "81": {
-            "0000": "Communications Main Setting 1",
-            "0001": "Communications Main Setting 2",
-            "0002": "Communications Main Setting 3",
-            "0003": "Communications Main Setting 4",
-            "0004": "Communications Main Setting 5",
-            "0005": "Communications Main Setting 6",
-            "0006": "Communications Main Setting 7",
-            "0007": "Communications Main Setting 8",
-            "0008": "Internal Duty Setting",
-            "0009": "Base-Up Value",
-            "000A": "Soft-start Up Time",
-            "000B": "Soft-start Down Time",
-            "000C": "Output Upper Limit",
-            "000D": "Output Lower Limit",
-            "000E": "Heater Burnout Threshold",
-            "000F": "Heater Characteristic Resistance for Phase Control",
-            "0010": "Heater Characteristic Resistance for Optimum Cycle Control",
-            "0011": "Heater Burnout Detection Lower Limit"
+            "0000": "Communications_Main_Setting_1",
+            "0001": "Communications_Main_Setting_2",
+            "0002": "Communications_Main_Setting_3",
+            "0003": "Communications_Main_Setting_4",
+            "0004": "Communications_Main_Setting_5",
+            "0005": "Communications_Main_Setting_6",
+            "0006": "Communications_Main_Setting_7",
+            "0007": "Communications_Main_Setting_8",
+            "0008": "Internal_Duty_Setting",
+            "0009": "Base-Up_Value",
+            "000A": "Soft-start_Up_Time",
+            "000B": "Soft-start_Down_Time",
+            "000C": "Output_Upper_Limit",
+            "000D": "Output_Lower_Limit",
+            "000E": "Heater_Burnout_Threshold",
+            "000F": "Heater_Characteristic_Resistance_for_Phase_Control",
+            "0010": "Heater_Characteristic_Resistance_for_Optimum_Cycle_Control",
+            "0011": "Heater_Burnout_Detection_Lower_Limit"
         },
         "C1": {
-            "0000": "Communications Main Setting 1",
-            "0001": "Communications Main Setting 2",
-            "0002": "Communications Main Setting 3",
-            "0003": "Communications Main Setting 4",
-            "0004": "Communications Main Setting 5",
-            "0005": "Communications Main Setting 6",
-            "0006": "Communications Main Setting 7",
-            "0007": "Communications Main Setting 8",
-            "0008": "Internal Duty Setting",
-            "0009": "Base-Up Value",
-            "000A": "Soft-start Up Time",
-            "000B": "Soft-start Down Time",
-            "000C": "Output Upper Limit",
-            "000D": "Output Lower Limit",
-            "000E": "Heater Burnout Threshold",
-            "000F": "Heater Characteristic Resistance for Phase Control",
-            "0010": "Heater Characteristic Resistance for Optimum Cycle Control",
-            "0011": "Heater Burnout Detection Lower Limit"
+            "0000": "Communications_Main_Setting_1",
+            "0001": "Communications_Main_Setting_2",
+            "0002": "Communications_Main_Setting_3",
+            "0003": "Communications_Main_Setting_4",
+            "0004": "Communications_Main_Setting_5",
+            "0005": "Communications_Main_Setting_6",
+            "0006": "Communications_Main_Setting_7",
+            "0007": "Communications_Main_Setting_8",
+            "0008": "Internal_Duty_Setting",
+            "0009": "Base-Up_Value",
+            "000A": "Soft-start_Up_Time",
+            "000B": "Soft-start_Down_Time",
+            "000C": "Output_Upper_Limit",
+            "000D": "Output_Lower_Limit",
+            "000E": "Heater_Burnout_Threshold",
+            "000F": "Heater_Characteristic_Resistance_for_Phase_Control",
+            "0010": "Heater_Characteristic_Resistance_for_Optimum_Cycle_Control",
+            "0011": "Heater_Burnout_Detection_Lower_Limit"
         },
         "83": {
-            "0000": "Communications Data Length",
-            "0001": "Communications Stop Bits",
-            "0002": "Communications Parity",
-            "0003": "Send Wait Time",
-            "0004": "Communications Timeout Time",
-            "0005": "Communications Unit Number",
-            "0006": "Communications Baud Rate",
-            "0007": "Communications Main Setting Number",
-            "0008": "External Duty Input Enable/Disable",
-            "0009": "Output Mode Selection",
-            "000A": "Input Digital Filter Time Constant",
-            "000B": "Input Signal Type",
-            "000C": "Main Setting Automatic Input Selection",
-            "000D": "Main Setting Manual Input Selection",
-            "000E": "Control Method Default",
-            "000F": "Main Setting Automatic/Manual Default",
-            "0010": "Number of Alarms for Heater Burnout Detection",
-            "0011": "Load Current Upper Limit",
-            "0012": "Event Input Assignment",
-            "0013": "Alarm Output Open in Alarm",
-            "0014": "Heater Burnout Alarm Operation",
-            "0015": "Total Run Time Exceeded Alarm Operation",
-            "0016": "Total Run Time Alarm Set Value",
-            "0017": "External Input Range Alarm Operation",
-            "0018": "External Duty Input Alarm Operation",
-            "0019": "SSR short circuit detection enabled",
-            "001A": "SSR open failure detection",
-            "001B": "CT failure detection"
+            "0000": "Communications_Data_Length",
+            "0001": "Communications_Stop_Bits",
+            "0002": "Communications_Parity",
+            "0003": "Send_Wait_Time",
+            "0004": "Communications_Timeout_Time",
+            "0005": "Communications_Unit_Number",
+            "0006": "Communications_Baud_Rate",
+            "0007": "Communications_Main_Setting_Number",
+            "0008": "External_Duty_Input_Enable/Disable",
+            "0009": "Output_Mode_Selection",
+            "000A": "Input_Digital_Filter_Time_Constant",
+            "000B": "Input_Signal_Type",
+            "000C": "Main_Setting_Automatic_Input_Selection",
+            "000D": "Main_Setting_Manual_Input_Selection",
+            "000E": "Control_Method_Default",
+            "000F": "Main_Setting_Automatic/Manual_Default",
+            "0010": "Number_of_Alarms_for_Heater_Burnout_Detection",
+            "0011": "Load_Current_Upper_Limit",
+            "0012": "Event_Input_Assignment",
+            "0013": "Alarm_Output_Open_in_Alarm",
+            "0014": "Heater_Burnout_Alarm_Operation",
+            "0015": "Total_Run_Time_Exceeded_Alarm_Operation",
+            "0016": "Total_Run_Time_Alarm_Set_Value",
+            "0017": "External_Input_Range_Alarm_Operation",
+            "0018": "External_Duty_Input_Alarm_Operation",
+            "0019": "SSR_Short_Circuit_Detection_Enabled",
+            "001A": "SSR_Open_Failure_Detection",
+            "001B": "CT_Failure_Detection"
         },
         "C3": {
-            "0000": "Communications Data Length",
-            "0001": "Communications Stop Bits",
-            "0002": "Communications Parity",
-            "0003": "Send Wait Time",
-            "0004": "Communications Timeout Time",
-            "0005": "Communications Unit Number",
-            "0006": "Communications Baud Rate",
-            "0007": "Communications Main Setting Number",
-            "0008": "External Duty Input Enable/Disable",
-            "0009": "Output Mode Selection",
-            "000A": "Input Digital Filter Time Constant",
-            "000B": "Input Signal Type",
-            "000C": "Main Setting Automatic Input Selection",
-            "000D": "Main Setting Manual Input Selection",
-            "000E": "Control Method Default",
-            "000F": "Main Setting Automatic/Manual Default",
-            "0010": "Number of Alarms for Heater Burnout Detection",
-            "0011": "Load Current Upper Limit",
-            "0012": "Event Input Assignment",
-            "0013": "Alarm Output Open in Alarm",
-            "0014": "Heater Burnout Alarm Operation",
-            "0015": "Total Run Time Exceeded Alarm Operation",
-            "0016": "Total Run Time Alarm Set Value",
-            "0017": "External Input Range Alarm Operation",
-            "0018": "External Duty Input Alarm Operation",
-            "0019": "SSR short circuit detection enabled",
-            "001A": "SSR open failure detection",
-            "001B": "CT failure detection"
+            "0000": "Communications_Data_Length",
+            "0001": "Communications_Stop_Bits",
+            "0002": "Communications_Parity",
+            "0003": "Send_Wait_Time",
+            "0004": "Communications_Timeout_Time",
+            "0005": "Communications_Unit_Number",
+            "0006": "Communications_Baud_Rate",
+            "0007": "Communications_Main_Setting_Number",
+            "0008": "External_Duty_Input_Enable/Disable",
+            "0009": "Output_Mode_Selection",
+            "000A": "Input_Digital_Filter_Time_Constant",
+            "000B": "Input_Signal_Type",
+            "000C": "Main_Setting_Automatic_Input_Selection",
+            "000D": "Main_Setting_Manual_Input_Selection",
+            "000E": "Control_Method_Default",
+            "000F": "Main_Setting_Automatic/Manual_Default",
+            "0010": "Number_of_Alarms_for_Heater_Burnout_Detection",
+            "0011": "Load_Current_Upper_Limit",
+            "0012": "Event_Input_Assignment",
+            "0013": "Alarm_Output_Open_in_Alarm",
+            "0014": "Heater_Burnout_Alarm_Operation",
+            "0015": "Total_Run_Time_Exceeded_Alarm_Operation",
+            "0016": "Total_Run_Time_Alarm_Set_Value",
+            "0017": "External_Input_Range_Alarm_Operation",
+            "0018": "External_Duty_Input_Alarm_Operation",
+            "0019": "SSR_short_circuit_detection_enabled",
+            "001A": "SSR_open_failure_detection",
+            "001B": "CT_failure_detection"
         }
     }],
 
     "C383_notation" : [{
-    "Communications Data Length": {
+    "Communications_Data_Length": {
         "0": 7,
         "1": 8
     },
-    "Communications Stop Bits": {
+    "Communications_Stop_Bits": {
         "0": 1,
         "1": 2
     },
-    "Communications Parity": {
+    "Communications_Parity": {
         "0": "None",
         "1": "Even",
         "2": "Odd"
     },
-    "Send Wait Time": {
+    "Send_Wait_Time": {
         "0": ""
     },
-    "Communications Timeout Time": {
-        "0": "Communications timeout function disabled",
+    "Communications_Timeout_Time": {
+        "0": "Communications_Timeout_Function_Disabled",
         "1": ""
     },
-    "Communications Unit Number": {
+    "Communications_Unit_Number": {
         "0": ""
     },
-    "Communications Baud Rate": {
+    "Communications_Baud_Rate": {
         "0": 9.6,
         "1": 19.2,
         "2": 38.4,
         "3": 57.6
     },
-    "Communications Main Setting Number": {
-        "0": "Automatic Assignment",
-        "1": "Ch1 control output (heating)", 
-        "2": "Ch2 control output (heating)",
-        "3": "Ch3 control output (heating)",
-        "4": "Ch4 control output (heating)",
-        "5": "Ch1 control output (cooling)",
-        "6": "Ch2 control output (cooling)",
-        "7": "Ch3 control output (cooling)",
-        "8": "Ch4 control output (cooling)"
+    "Communications_Main_Setting_Number": {
+        "0": "Automatic_Assignment",
+        "1": "Ch1_control_output_(heating)", 
+        "2": "Ch2_control_output_(heating)",
+        "3": "Ch3_control_output_(heating)",
+        "4": "Ch4_control_output_(heating)",
+        "5": "Ch1_control_output_(cooling)",
+        "6": "Ch2_control_output_(cooling)",
+        "7": "Ch3_control_output_(cooling)",
+        "8": "Ch4_control_output_(cooling)"
     },
-    "External Duty Input Enable/Disable": {
+    "External_Duty_Input_Enable/Disable": {
         "0": "Disable",
         "1": "Enable"
     },
-    "Output Mode Selection": {
-        "0": "Proportional to phase angle",
-        "1": "Proportional to square voltage",
-        "2": "Proportional to voltage",
-        "3": "Constant current"
+    "Output_Mode_Selection": {
+        "0": "Proportional_to_phase_angle",
+        "1": "Proportional_to_square_voltage",
+        "2": "Proportional_to_voltage",
+        "3": "Constant_current"
     },
-    "Input Digital Filter Time Constant": {
+    "Input_Digital_Filter_Time_Constant": {
         "0": ""
     },
-    "Input Signal Type": {
-        "0": "Linear input",
-        "1": "Voltage ON/OFF input"
+    "Input_Signal_Type": {
+        "0": "Linear_input",
+        "1": "Voltage_ON/OFF_input"
     },
-    "Main Setting Automatic Input Selection": {
-        "0": "4 to 20 mA or 1 to 5 VDC",
+    "Main_Setting_Automatic_Input_Selection": {
+        "0": "4_to_20_mA_or_1_to_5_VDC",
         "1": "Communications"
     },
-    "Main Setting Manual Input Selection": {
-        "0": "External variable resistor input",
-        "1": "Key input"
+    "Main_Setting_Manual_Input_Selection": {
+        "0": "External_variable_resistor_input",
+        "1": "Key_input"
     },
-    "Control Method Default": {
-        "0": "Phase control",
-        "1": "Optimum cycle control"
+    "Control_Method_Default": {
+        "0": "Phase_control",
+        "1": "Optimum_cycle_control"
     },
-    "Main Setting Automatic/Manual Default": {
+    "Main_Setting_Automatic/Manual_Default": {
         "0": "Automatic",
         "1": "Manual"
     },
-    "Number of Alarms for Heater Burnout Detection": {
+    "Number_of_Alarms_for_Heater_Burnout_Detection": {
         "0": ""
     },
-    "Load Current Upper Limit": {
-        "0": "Function disabled",
+    "Load_Current_Upper_Limit": {
+        "0": "Function_disabled",
         "1": ""
     },
-    "Event Input Assignment": {
-        "0": "No assignment",
-        "1": "Control method selection",
-        "2": "Main setting automatic/manual selection"
+    "Event_Input_Assignment": {
+        "0": "No_assignment",
+        "1": "Control_method_selection",
+        "2": "Main_setting_automatic/manual_selection"
     },
-    "Alarm Output Open in Alarm": {
-        "0": "Close in alarm",
-        "1": "Open in alarm"
+    "Alarm_Output_Open_in_Alarm": {
+        "0": "Close_in_alarm",
+        "1": "Open_in_alarm"
     },
-    "Heater Burnout Alarm Operation": {
+    "Heater_Burnout_Alarm_Operation": {
         "0": "Disable",
-        "1": "Alarm level 1 (fatal error)",
-        "2": "Alarm level 2 (nonfatal error)"
+        "1": "Alarm_level_1_(fatal_error)",
+        "2": "Alarm_level_2_(nonfatal_error)"
     },
-    "Total Run Time Exceeded Alarm Operation": {
+    "Total_Run_Time_Exceeded_Alarm_Operation": {
         "0": "Disable",
-        "1": "Alarm level 1 (fatal error)",
-        "2": "Alarm level 2 (nonfatal error)"
+        "1": "Alarm_level_1_(fatal_error)",
+        "2": "Alarm_level_2_(nonfatal_error)"
     },
-    "Total Run Time Alarm Set Value": {
-        "0": "Function disabled",
+    "Total_Run_Time_Alarm_Set_Value": {
+        "0": "Function_disabled",
         "1": ""
     },
-    "External Input Range Alarm Operation": {
+    "External_Input_Range_Alarm_Operation": {
         "0": "Disable",
-        "1": "Alarm level 1 (fatal error)",
-        "2": "Alarm level 2 (nonfatal error)"
+        "1": "Alarm_level_1_(fatal_error)",
+        "2": "Alarm_level_2_(nonfatal_error)"
     },
-    "External Duty Input Alarm Operation": {
+    "External_Duty_Input_Alarm_Operation": {
         "0": "Disable",
-        "1": "Alarm level 1 (fatal error)",
-        "2": "Alarm level 2 (nonfatal error)"
+        "1": "Alarm_level_1_(fatal_error)",
+        "2": "Alarm_level_2_(nonfatal_error)"
     }
     }],
 
     "status_labels" : [
-        "SSR Short-circuit",
-        "SSR Open Failure",
-        "CT Failure",
-        "Heater Overcurrent",
-        "Zero Cross Error",
-        "Frequency Error",
-        "Heater Burnout",
-        "Not used.",
-        "External Input Range Alarm",
-        "External Duty Input Alarm",
-        "Total Run Time Alarm",
-        "Communications Timeout",
-        "Not used.",
-        "Not used.",
-        "Not used.",
-        "Not used.",
-        "Alarm Output 1",
-        "Alarm Output 2",
-        "Event Input",
-        "Setting Level",
-        "Main Setting Automatic Manual Selection",
-        "Control method",
-        "Not used.",
-        "Not used.",
-        "Not used.",
-        "Not used.",
-        "Not used.",
-        "Not used.",
-        "Not used.",
-        "Not used.",
-        "Not used.",
-        "Not used."
+        "SSR_Short-circuit",
+        "SSR_Open_Failure",
+        "CT_Failure",
+        "Heater_Overcurrent",
+        "Zero_Cross_Error",
+        "Frequency_Error",
+        "Heater_Burnout",
+        "Not_used.",
+        "External_Input_Range_Alarm",
+        "External_Duty_Input_Alarm",
+        "Total_Run_Time_Alarm",
+        "Communications_Timeout",
+        "Not_used.",
+        "Not_used.",
+        "Not_used.",
+        "Not_used.",
+        "Alarm_Output_1",
+        "Alarm_Output_2",
+        "Event_Input",
+        "Setting_Level",
+        "Main_Setting_Automatic_Manual_Selection",
+        "Control_method",
+        "Not_used.",
+        "Not_used.",
+        "Not_used.",
+        "Not_used.",
+        "Not_used.",
+        "Not_used.",
+        "Not_used.",
+        "Not_used.",
+        "Not_used.",
+        "Not_used."
     ]
 }

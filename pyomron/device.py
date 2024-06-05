@@ -509,6 +509,7 @@ class Omron(ABC):
             or "Status" in comm
             and len(comm) != len(ret_dict) - 16
         ) and not ignoreError:
+            # print(f"comm is {comm}, ret_dict is {ret_dict}")
             # print(f"Error: Not all values were read.")
             raise KeyError("Not all values were read.")
         return ret_dict
@@ -559,4 +560,4 @@ class Omron(ABC):
         Args:
             setpoint (float[str, float]): The desired setpoint
         """
-        return await self._variable_area_read("810000", 8)
+        return await self._variable_area_read("8E0000", 6)

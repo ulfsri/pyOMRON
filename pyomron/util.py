@@ -7,7 +7,8 @@ Date: 2024-01-07
 import glob
 from comm import SerialDevice
 from device import Omron
-from trio import run
+from trio import open_nursery
+from trio_asyncio import run
 import trio
 import re
 from typing import Any
@@ -23,6 +24,22 @@ def gas_correction():
         The gas correction factor.
     """
     pass
+
+
+async def update_dict_dev(devices, port) -> dict[str, dict[str, str | float]]:
+    """Updates the dictionary with the new values.
+
+    Args:
+        devices (dict): The dictionary of devices.
+        port (str): The name of the serial port.
+
+    Returns:
+        dict: The dictionary of devices with the updated values.
+    """
+    dev = await is_omron_device(port)
+    if dev:
+        devices.update({port: dev[1]})
+    return devices
 
 
 async def find_devices() -> dict[str, Omron]:
@@ -46,11 +63,9 @@ async def find_devices() -> dict[str, Omron]:
 
     # Iterate through the output and check for OMRON devices
     devices = {}
-    for port in result:
-        # Check if the port is an OMRON device
-        dev = await is_omron_device(port)
-        if dev:
-            devices.update({port: dev[1]})
+    async with open_nursery() as g:
+        for port in result:
+            g.start_soon(update_dict_dev, devices, port)
     return devices
 
 
@@ -88,8 +103,8 @@ def get_device_type(port) -> dict[str, str]:
 async def diagnose():
     """Run various functions to ensure the device is functioning properly."""
     get_code1 = "Version"
-    get_code2 = "Internal Duty Setting"
-    set_code = "Output Upper Limit"
+    get_code2 = "Internal_Duty_Setting"
+    set_code = "Output_Upper_Limit"
     devs = await find_devices()
     print(f"Devices: {devs}")
     Daq = await daq.DAQ.init({"A": list(devs.keys())[0]})
