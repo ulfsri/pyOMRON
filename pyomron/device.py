@@ -30,7 +30,7 @@ class Omron(ABC):
         self._device_info = None
 
     @classmethod
-    async def new_device(cls, port: str, **kwargs: Any) -> "Omron":
+    async def new_device(cls, port: str, unit_no: int = 1, **kwargs: Any) -> "Omron":
         """Creates a new device. Chooses appropriate device based on characteristics.
 
         Example:
@@ -38,6 +38,7 @@ class Omron(ABC):
 
         Args:
             port (str): The port to connect to.
+            unit_no (int, optional): The unit number. Defaults to 1.
             **kwargs: Any
 
         Returns:
@@ -51,7 +52,7 @@ class Omron(ABC):
             "\x30",
             "\x33",
         ]  # Command for controller attribute read
-        byte_list = await cls._prepend(byte_list)
+        byte_list = await cls._prepend(byte_list, unit_no)
         byte_list = await cls._append(byte_list)
         byte = bytes("".join(byte_list), "ascii")
         byte += bytes([await cls._bcc_calc(byte_list)])
@@ -66,7 +67,7 @@ class Omron(ABC):
             raise ValueError("Device is not G3PW")
 
     @classmethod
-    async def _prepend(cls, frame: list[str]) -> list[str]:
+    async def _prepend(cls, frame: list[str], unit_no=1) -> list[str]:
         """Prepends the frame with the device id.
 
         Args:
@@ -75,14 +76,24 @@ class Omron(ABC):
         Returns:
             list[str]: Frame with prepended info
         """
-        return [
-            "\x02",  # STX
-            "\x30",  # Unit No.
-            "\x31",  # Unit No.
-            "\x30",  # Sub-address
-            "\x30",  # Sub-address
-            "\x30",  # SID
-        ] + frame
+        if unit_no and type(unit_no) != int:
+            unit_no = int(unit_no, 16)
+        n = hex(unit_no)
+        digs = list(n[2:].upper())
+        if len(digs) < 2:
+            digs.insert(0, "\x30")
+        return (
+            [
+                "\x02"  # STX
+            ]
+            + digs  # Unit No.
+            + [
+                "\x30",  # Sub-address
+                "\x30",  # Sub-address
+                "\x30",  # SID
+            ]
+            + frame
+        )
 
     @classmethod
     async def _append(cls, frame: list[str]) -> list[str]:
@@ -163,6 +174,7 @@ class Omron(ABC):
         }
         error_code = ret[5:7]
         if error_code != bytes("00", "ascii"):
+            print(error_code)
             # print(error_codes.get(bytes(error_code), "Unknown Error"))
             raise ValueError(f"{error_codes.get(bytes(error_code), "Unknown Error")}")
         return
