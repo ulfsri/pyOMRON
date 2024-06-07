@@ -1,3 +1,17 @@
+"""Module for the OMRON power controller device.
+
+Raises:
+    ValueError: _description_
+    ValueError: _description_
+    ValueError: _description_
+    ValueError: _description_
+    RuntimeError: _description_
+    KeyError: _description_
+
+Returns:
+    _type_: _description_
+"""
+
 from typing import Any, Union
 
 import json
@@ -18,16 +32,17 @@ class Omron(ABC):
     C383_notation = codes["C383_notation"][0]
     status_labels = codes["status_labels"]
 
-    def __init__(self, device: SerialDevice, **kwargs: Any) -> None:
+    def __init__(self, device: SerialDevice, unit_no: int = 1, **kwargs: Any) -> None:
         """Initializes the Device object.
 
         Args:
             device (SerialDevice): The serial device object.
-            id (str, optional): The device ID. Defaults to "A".
+            unit_no (int, optional): The device unit number. Defaults to 1.
             **kwargs: Additional keyword arguments.
         """
         self._device = device
         self._device_info = None
+        self._unit_no = unit_no
 
     @classmethod
     async def new_device(cls, port: str, unit_no: int = 1, **kwargs: Any) -> "Omron":
@@ -62,7 +77,7 @@ class Omron(ABC):
         ret = resp[15:-6].decode("ascii")
         # Chek using is_model class to see if it matches G3PW
         if await cls._is_model(ret):
-            return cls(device, **kwargs)
+            return cls(device, unit_no, **kwargs)
         else:
             raise ValueError("Device is not G3PW")
 
@@ -72,6 +87,7 @@ class Omron(ABC):
 
         Args:
             frame (list[str]): Command frame to prepend to
+            unit_no (int, optional): The unit number. Defaults to 1.
 
         Returns:
             list[str]: Frame with prepended info
@@ -112,7 +128,7 @@ class Omron(ABC):
         """Calculates the BCC of the frame.
 
         Args:
-            frame (list[str]): List of values in frame to use to find BCC
+            frame (list[str]prepend): List of values in frame to use to find BCC
 
         Returns:
             bcc (int): Calculated BCC
@@ -143,7 +159,7 @@ class Omron(ABC):
         Returns:
             list: Communication frame
         """
-        byte_list = await self._prepend(frame)
+        byte_list = await self._prepend(frame, self._unit_no)
         byte_list = await self._append(byte_list)
         byte = bytes("".join(byte_list), "ascii")
         byte += bytes([await self._bcc_calc(byte_list)])
