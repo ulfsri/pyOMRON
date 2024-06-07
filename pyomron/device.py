@@ -12,15 +12,14 @@ Returns:
     _type_: _description_
 """
 
-from typing import Any, Union
-
 import json
 import re
 from abc import ABC
+from typing import Any, Union
 
+import trio
 from comm import CommDevice, SerialDevice
 from trio import run
-import trio
 
 
 class Omron(ABC):
@@ -190,7 +189,7 @@ class Omron(ABC):
         }
         error_code = ret[5:7]
         if error_code != bytes("00", "ascii"):
-            print(error_code)
+            # print(error_code)
             # print(error_codes.get(bytes(error_code), "Unknown Error"))
             raise ValueError(f"{error_codes.get(bytes(error_code), "Unknown Error")}")
         return
@@ -472,7 +471,7 @@ class Omron(ABC):
         if resp[23] != "0" or resp[25] != "0" or resp[27] != "0" or resp[29] != "0":
             # print("Error occured")
             raise RuntimeError("Unknown Error")
-        print(f"Result = {bytes.fromhex(resp[30:-4]).decode('ascii')}")
+        # print(f"Result = {bytes.fromhex(resp[30:-4]).decode('ascii')}")
         return
 
     async def get(
