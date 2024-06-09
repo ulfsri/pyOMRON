@@ -30,14 +30,10 @@ classifiers = [  #! Update me
 
 
 [tool.poetry.dependencies]
-python = "^3.9"
-numpy = "^1.26.4"
-pandas = "^2.2.1"
-scipy = "^1.11.4"
-trio-serial = "^0.4.0"
-trio = "^0.25.0"
+python = "^3.12"
 asyncpg = "^0.29.0"
-trio-asyncio = "^0.15.0"
+anyserial = "^0.1.0"
+uvloop = "^0.19.0"
 
 [tool.poetry.dev-dependencies]
 bandit = "^1.7.7"
@@ -45,10 +41,10 @@ darglint = "^1.8.1"
 mypy = "^1.0"
 mypy-extensions = "^1.0.0"
 pre-commit = "^3.6.0"
+pyupgrade = "^3.16.0"
 pydocstyle = "^6.1.1"
 pylint = "^3.0.3"
 pytest = "^8.1.0"
-pyupgrade = "^3.15.1"
 safety = "^3.0.1"
 coverage = "^7.4.0"
 coverage-badge = "^1.1.0"

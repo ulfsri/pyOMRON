@@ -1,15 +1,10 @@
 """Module for the OMRON power controller device.
 
 Raises:
-    ValueError: _description_
-    ValueError: _description_
-    ValueError: _description_
-    ValueError: _description_
-    RuntimeError: _description_
-    KeyError: _description_
+    ValueError: If the device is not a G3PW device.
 
 Returns:
-    _type_: _description_
+    Device: The new device.
 """
 
 import json
@@ -17,9 +12,9 @@ import re
 from abc import ABC
 from typing import Any, Union
 
-import trio
+import anyio
+from anyio import run
 from comm import CommDevice, SerialDevice
-from trio import run
 
 
 class Omron(ABC):

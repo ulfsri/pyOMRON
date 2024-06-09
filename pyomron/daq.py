@@ -4,18 +4,16 @@ Author: Grayson Bellamy
 Date: 2024-01-07
 """
 
-from typing import Any
-from device import Omron
-from trio import open_nursery
-from datetime import datetime
-import csv
 import time
 import warnings
-import trio_asyncio
-import asyncpg
-from trio_asyncio import run
-from threading import Thread
+from datetime import datetime
 from queue import Queue
+from threading import Thread
+from typing import Any
+
+import asyncpg
+from anyio import create_task_group, run
+from device import Omron
 
 warnings.filterwarnings("always")
 
@@ -145,12 +143,12 @@ class DAQ:
         if val and isinstance(val, str):
             val = [val]
         if not id:
-            async with open_nursery() as g:
+            async with create_task_group() as g:
                 for dev in dev_list:
                     g.start_soon(self.update_dict_get, ret_dict, dev, val)
         if id and isinstance(id, str):
             id = id.split()
-        async with open_nursery() as g:
+        async with create_task_group() as g:
             for i in id:
                 g.start_soon(self.update_dict_get, ret_dict, i, val)
         return ret_dict
@@ -192,17 +190,17 @@ class DAQ:
         if isinstance(command, str):
             command = command.split()
         if not id:
-            async with open_nursery() as g:
+            async with create_task_group() as g:
                 for dev in dev_list:
                     g.start_soon(self.update_dict_set, ret_dict, dev, command)
         if isinstance(id, str):
             id = id.split()
-        async with open_nursery() as g:
+        async with create_task_group() as g:
             for i in id:
                 g.start_soon(self.update_dict_set, ret_dict, i, command)
         return ret_dict
 
-    async def heat(self, setpoint: float, id: str = "") -> dict[str, None]:
+    async def heat(self, setpoint: float, id: str | list = "") -> dict[str, None]:
         """Convenience: Sets the heater setpoint.
 
         Example:
@@ -211,6 +209,7 @@ class DAQ:
 
         Args:
             setpoint (float): The desired setpoint
+            id (str | list): Devices to set. If not specified, returns data from all devices.
 
         Returns:
             dict[str, None]: The dictionary of devices changed.
@@ -261,14 +260,27 @@ class AsyncPG:
     """Async context manager for connecting to a PostgreSQL database using asyncpg."""
 
     def __init__(self, **kwargs):
+        """Initializes the AsyncPG object."""
         self.conn = None
         self.kwargs = kwargs
 
     async def __aenter__(self):
+        """Connects to the database.
+
+        Returns:
+            asyncpg.Connection: The connection object to the database.
+        """
         self.conn = await asyncpg.connect(**self.kwargs)
         return self.conn
 
     async def __aexit__(self, exc_type, exc, tb):
+        """Closes the connection to the database.
+
+        Args:
+            exc_type: The exception type.
+            exc: The exception.
+            tb: The traceback.
+        """
         await self.conn.close()
         self.conn = None
 
@@ -318,11 +330,9 @@ class DAQLogging:
             dict (dict): The dictionary containing the data to be added as columns.
             conn: The connection object to the database.
         """
-        async with trio_asyncio.aio_as_trio(conn.transaction()):
-            await trio_asyncio.aio_as_trio(
-                conn.execute(
-                    "CREATE TABLE IF NOT EXISTS omron (Time timestamp, Device text, PRIMARY KEY (Time, Device))"
-                )
+        async with conn.transaction():
+            await conn.execute(
+                "CREATE TABLE IF NOT EXISTS omron (Time timestamp, Device text, PRIMARY KEY (Time, Device))"
             )
             keys = sorted(dict.keys(), key=self._key_func)
             for key in keys:
@@ -331,16 +341,12 @@ class DAQLogging:
                     data_type = "timestamp"
                 elif isinstance(dict[key], float):
                     data_type = "float"
-                await trio_asyncio.aio_as_trio(
-                    conn.execute(
-                        f"ALTER TABLE omron ADD COLUMN IF NOT EXISTS {''.join(key.split()).lower()} {data_type}"
-                    )
+                await conn.execute(
+                    f"ALTER TABLE omron ADD COLUMN IF NOT EXISTS {''.join(key.split()).lower()} {data_type}"
                 )
-            await trio_asyncio.aio_as_trio(
-                conn.execute(
-                    "SELECT create_hypertable('omron', by_range('time'), if_not_exists => TRUE)"
-                )  # create the timescaledb hypertable
-            )
+            await conn.execute(
+                "SELECT create_hypertable('omron', by_range('time'), if_not_exists => TRUE)"
+            )  # create the timescaledb hypertable
 
     async def insert_data(self, dict, conn):
         """Inserts the data into the database.
@@ -349,20 +355,16 @@ class DAQLogging:
             dict (dict): The dictionary containing the data to be added.
             conn: The connection object to the database.
         """
-        async with trio_asyncio.aio_as_trio(conn.transaction()):
+        async with conn.transaction():
             for dev in dict:
-                await trio_asyncio.aio_as_trio(
-                    conn.execute(
-                        "INSERT INTO omron ("
-                        + ", ".join(
-                            [key.lower().replace(" ", "") for key in dev.keys()]
-                        )
-                        + ") VALUES ("
-                        + ", ".join(["$" + str(i + 1) for i in range(len(dev))])
-                        + ")",
-                        *dev.values(),
-                    )  # We could optimize this by using a single insert statement for all devices. We would have to make sure that the order of the values is the same for all devices and it would only work if they all have the same fields. That is, it wouldn't work for the flowmeter in our case because it has RH values
-                )
+                await conn.execute(
+                    "INSERT INTO omron ("
+                    + ", ".join([key.lower().replace(" ", "") for key in dev.keys()])
+                    + ") VALUES ("
+                    + ", ".join(["$" + str(i + 1) for i in range(len(dev))])
+                    + ")",
+                    *dev.values(),
+                )  # We could optimize this by using a single insert statement for all devices. We would have to make sure that the order of the values is the same for all devices and it would only work if they all have the same fields. That is, it wouldn't work for the flowmeter in our case because it has RH values
 
     async def update_dict_log(
         self, Daq, qualities
@@ -370,9 +372,8 @@ class DAQLogging:
         """Updates the dictionary with the new values.
 
         Args:
-            ret_dict (dict): The dictionary of devices to update.
-            dev (str): The name of the device.
-            val (list): The values to get from the device.
+            Daq (DAQ): The DAQ object to take readings from.
+            qualities (list): The list of qualities to log.
 
         Returns:
             dict: The dictionary of devices with the updated values.
@@ -399,7 +400,7 @@ class DAQLogging:
             rate = self.rate
         database = self.database
         rows = []
-        async with trio_asyncio.aio_as_trio(database) as conn:
+        async with database as conn:
             self.df = await self.Daq.get(self.qualities)
             unique = dict()
             for dev in self.df:
@@ -421,9 +422,9 @@ class DAQLogging:
                 # if not, continue logging
                 if time.time_ns() / 1e9 - (reps * 1 / rate + start / 1e9) >= 1 / rate:
                     # Check if something is in the queue
-                    print(
-                        f"Difference between readings: {(time.time_ns() - prev) / 1e9} s"
-                    )
+                    # print(
+                    #     f"Difference between readings: {(time.time_ns() - prev) / 1e9} s"
+                    # )
                     # if (
                     #     abs(time.time_ns() / 1e9 - reps * 1 / rate - start / 1e9)
                     #     > 1.003 / rate
@@ -434,7 +435,7 @@ class DAQLogging:
                     if write_async:
                         nurse_time = time.time_ns()
                         # open_nursery
-                        async with open_nursery() as g:
+                        async with create_task_group() as g:
                             # insert_data from the previous iteration
                             g.start_soon(self.insert_data, rows, conn)
                             # get
@@ -463,14 +464,14 @@ class DAQLogging:
                                 **self.df[dev],
                             }
                         )
-                    print(f"Process took {(time2 - time1) / 1e6} ms")
+                    # print(f"Process took {(time2 - time1) / 1e6} ms")
                     time3 = time.time_ns()
                     if not write_async:
                         await self.insert_data(
                             rows, conn
                         )  # This takes a little bit (~8 ms). I think we should run this in a nursery with the next .get() call. That means that we will have to wait until the next loop to submit the data from the previous iteration.
                     time4 = time.time_ns()
-                    print(f"Insert took {(time4 - time3) / 1e6} ms")
+                    # print(f"Insert took {(time4 - time3) / 1e6} ms")
                     print(
                         f"Time with nursery is {write_async}: {(time4 - nurse_time) / 1e6} ms"
                     )
