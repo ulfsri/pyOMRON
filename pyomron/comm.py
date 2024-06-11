@@ -79,7 +79,7 @@ class SerialDevice(CommDevice):
         self,
         port: str,
         baudrate: int = 57600,
-        timeout: int = 500,  # Not present in manual
+        timeout: int = 150,  # Not present in manual
         databits: int = 7,
         parity: Parity = Parity.EVEN,
         stopbits: StopBits = StopBits.TWO,
@@ -218,19 +218,20 @@ class SerialDevice(CommDevice):
             self.isOpen = True
             await self._write(command)
             line = bytearray()
-            while True:
-                c = None
-                with anyio.move_on_after(
-                    self.timeout / 1000
-                ):  # if keep reading none, then timeout
-                    while c is None:  # Keep reading until a character is read
-                        c = await self._read()
-                        await anyio.lowlevel.checkpoint()
-                if c is None:  # if we reach timeout,
-                    break
-                line += c
-                if b"\x03" in line:
-                    break
+            with anyio.move_on_after(self.timeout / 1000):
+                while True:
+                    c = None
+                    with anyio.move_on_after(
+                        self.timeout / 1000
+                    ):  # if keep reading none, then timeout
+                        while c is None:  # Keep reading until a character is read
+                            c = await self._read()
+                            await anyio.lowlevel.checkpoint()
+                    if c is None:  # if we reach timeout,
+                        break
+                    line += c
+                    if b"\x03" in line:
+                        break
         return line
 
     async def _flush(self) -> None:
