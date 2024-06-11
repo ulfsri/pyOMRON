@@ -7,12 +7,12 @@ Returns:
     Device: The new device.
 """
 
+import importlib
 import json
 from abc import ABC
 from typing import Any, Self
-import importlib
 
-from comm import SerialDevice
+from .comm import SerialDevice
 
 
 class Omron(ABC):

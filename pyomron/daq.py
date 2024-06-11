@@ -13,7 +13,8 @@ from typing import Any
 
 import asyncpg
 from anyio import create_task_group, run
-from device import Omron
+
+from .device import Omron
 
 warnings.filterwarnings("always")
 

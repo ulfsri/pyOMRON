@@ -8,10 +8,11 @@ import glob
 import re
 from typing import Any
 
-import daq
 from anyio import create_task_group, run
-from comm import SerialDevice
-from device import Omron
+
+from . import daq
+from .comm import SerialDevice
+from .device import Omron
 
 
 def gas_correction():
