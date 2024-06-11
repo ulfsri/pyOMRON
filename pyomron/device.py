@@ -10,6 +10,7 @@ Returns:
 import json
 from abc import ABC
 from typing import Any, Self
+import importlib
 
 from comm import SerialDevice
 
@@ -17,7 +18,8 @@ from comm import SerialDevice
 class Omron(ABC):
     """Omron class."""
 
-    with open("codes.json") as f:
+    codes = importlib.resources.files("pyomron").joinpath("codes.json")
+    with open(codes) as f:
         codes = json.load(f)
     addresses = codes["addresses"][0]
     C383_notation = codes["C383_notation"][0]

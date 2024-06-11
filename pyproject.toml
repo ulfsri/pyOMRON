@@ -5,8 +5,10 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "pyomron"
-version = "0.0.3"
+version = "0.0.6"
 description = "Python API for acquisition and control of OMRON G3PW Power Controller."
+packages = [{include = "pyomron"}]
+include = [{path = "pyomron/codes.json", format = ["sdist", "wheel"]}]
 readme = "README.md"
 authors = ["ulfsri <grayson.bellamy@ul.org>"]
 license = "MIT"
