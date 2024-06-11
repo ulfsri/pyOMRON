@@ -12,7 +12,7 @@ import json
 from abc import ABC
 from typing import Any, Self
 
-from .comm import SerialDevice
+from pyomron.comm import SerialDevice
 
 
 class Omron(ABC):
