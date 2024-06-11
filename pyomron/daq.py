@@ -9,7 +9,7 @@ import warnings
 from datetime import datetime
 from queue import Queue
 from threading import Thread
-from typing import Any
+from typing import Any, Callable
 
 import asyncpg
 from anyio import create_task_group, run
@@ -313,7 +313,7 @@ class DAQLogging:
         self.database = AsyncPG(
             user="app", password="app", database="app", host="127.0.0.1"
         )
-        self.qin: Queue[str | function | list[function | Any]] | None = None
+        self.qin: Queue[str | Callable | list[Callable | Any]] | None = None
         self.qout: Queue[dict[str, str | float]] | None = None
         return
 
@@ -417,7 +417,7 @@ class DAQLogging:
                     # if stop_logging is in the queue, break out of the while loop
                     if comm == "Stop":
                         break
-                    elif isinstance(comm, list) and isinstance(comm[0], function):
+                    elif isinstance(comm, list) and callable(comm[0]):
                         df = await comm[0](*comm[1:])
                         self.qout.put(df)
                 # if not, continue logging
@@ -490,7 +490,7 @@ class DAQLogging:
         duration: float | None = None,
         rate: float | None = None,
     ) -> tuple[
-        Queue[str | function | list[function | Any]], Queue[dict[str, str | float]]
+        Queue[str | Callable | list[Callable | Any]], Queue[dict[str, str | float]]
     ]:
         """Starts the logging process.
 
