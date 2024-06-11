@@ -25,7 +25,9 @@ def gas_correction():
     pass
 
 
-async def update_dict_dev(devices, port) -> dict[str, dict[str, str | float]]:
+async def update_dict_dev(
+    devices: dict[str, Omron], port: str
+) -> dict[str, dict[str, str | float]]:
     """Updates the dictionary with the new values.
 
     Args:
@@ -58,10 +60,9 @@ async def find_devices() -> dict[str, Omron]:
     """
     # Get the list of available serial ports
     result = glob.glob("/dev/ttyUSB*")
-    # result = result[:4] + result[6:]
 
     # Iterate through the output and check for OMRON devices
-    devices = {}
+    devices: dict[str, Omron] = {}
     async with create_task_group() as g:
         for port in result:
             g.start_soon(update_dict_dev, devices, port)
@@ -83,20 +84,6 @@ async def is_omron_device(port: str, **kwargs: Any) -> bool | tuple[bool, Omron]
         return (True, await Omron.new_device(port, **kwargs))
     except ValueError:
         return False
-
-
-def get_device_type(port) -> dict[str, str]:
-    """Get the device type for the given port.
-
-    Parameters:
-    port(str): The name of the serial port.
-
-    Returns:
-        dict[str, str]: A dictionary containing the port name and the type of device on the port.
-    """
-    # Implement the logic to get the device information
-    # You can use any method that suits your needs
-    pass
 
 
 async def diagnose():

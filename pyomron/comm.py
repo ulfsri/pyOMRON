@@ -6,7 +6,6 @@ Date: 2024-01-05
 
 from abc import ABC, abstractmethod
 from collections.abc import ByteString
-from typing import Optional
 
 import anyio
 import anyio.lowlevel
@@ -26,7 +25,7 @@ class CommDevice(ABC):
         self.timeout = timeout
 
     @abstractmethod
-    async def _read(self, len: int) -> Optional[str]:
+    async def _read(self, len: int) -> ByteString | None:
         """Reads the serial communication.
 
         Args:
@@ -52,7 +51,7 @@ class CommDevice(ABC):
         pass
 
     @abstractmethod
-    async def _readline(self) -> Optional[str]:
+    async def _readline(self) -> bytearray | None:
         """Reads the serial communication until end-of-line character reached.
 
         Returns:
@@ -61,7 +60,7 @@ class CommDevice(ABC):
         pass
 
     @abstractmethod
-    async def _write_readline(self, command: str) -> Optional[str]:
+    async def _write_readline(self, command: str) -> bytearray | None:
         """Writes the serial communication and reads the response until end-of-line character reached.
 
         Args:
@@ -118,7 +117,7 @@ class SerialDevice(CommDevice):
         self.isOpen = False
         self.ser_devc = SerialStream(**self.serial_setup)
 
-    async def _read(self, len: int = None) -> ByteString:
+    async def _read(self, len: int | None = None) -> ByteString | None:
         """Reads the serial communication.
 
         Args:
@@ -136,7 +135,6 @@ class SerialDevice(CommDevice):
                 return await self.ser_devc.receive_some(len)
         else:
             return await self.ser_devc.receive_some(len)
-        return None
 
     async def _write(self, command: str) -> None:
         """Writes the serial communication.
@@ -153,7 +151,7 @@ class SerialDevice(CommDevice):
                 await self.ser_devc.send_all(command)
         return None
 
-    async def _readline(self) -> str:
+    async def _readline(self) -> bytearray:
         """Reads the serial communication until end-of-line character reached.
 
         Returns:
@@ -176,9 +174,9 @@ class SerialDevice(CommDevice):
                 if self.eol in line:
                     break
         self.isOpen = False
-        return line.decode("ascii")
+        return line
 
-    async def _write_readall(self, command: str) -> list:
+    async def _write_readall(self, command: str) -> list[str] | None:
         """Write command and read until timeout reached.
 
         Args:
@@ -191,7 +189,7 @@ class SerialDevice(CommDevice):
             self.isOpen = True
             await self._write(command)
             line = bytearray()
-            arr_line = []
+            arr_line: list[str] = []
             while True:
                 c = None
                 with anyio.move_on_after(
@@ -207,7 +205,7 @@ class SerialDevice(CommDevice):
         self.isOpen = False
         return arr_line
 
-    async def _write_readline(self, command: str) -> str:
+    async def _write_readline(self, command: str) -> bytearray:
         """Writes the serial communication and reads the response until end-of-line character reached.
 
         Parameters:

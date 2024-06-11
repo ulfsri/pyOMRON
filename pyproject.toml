@@ -62,7 +62,7 @@ convention = "google"
 
 [tool.mypy]
 # https://mypy.readthedocs.io/en/latest/config_file.html#using-a-pyproject-toml-file
-python_version = 3.9
+python_version = 3.12
 pretty = true
 show_traceback = true
 color_output = true

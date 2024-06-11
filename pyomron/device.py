@@ -8,13 +8,10 @@ Returns:
 """
 
 import json
-import re
 from abc import ABC
-from typing import Any, Union
+from typing import Any, Self
 
-import anyio
-from anyio import run
-from comm import CommDevice, SerialDevice
+from comm import SerialDevice
 
 
 class Omron(ABC):
@@ -39,7 +36,7 @@ class Omron(ABC):
         self._unit_no = unit_no
 
     @classmethod
-    async def new_device(cls, port: str, unit_no: int = 1, **kwargs: Any) -> "Omron":
+    async def new_device(cls, port: str, unit_no: int = 1, **kwargs: Any) -> Self:
         """Creates a new device. Chooses appropriate device based on characteristics.
 
         Example:
@@ -76,7 +73,7 @@ class Omron(ABC):
             raise ValueError("Device is not G3PW")
 
     @classmethod
-    async def _prepend(cls, frame: list[str], unit_no=1) -> list[str]:
+    async def _prepend(cls, frame: list[str], unit_no: int = 1) -> list[str]:
         """Prepends the frame with the device id.
 
         Args:
@@ -160,7 +157,7 @@ class Omron(ABC):
         return byte
 
     @classmethod
-    async def _check_end_code(cls, ret: bytearray):
+    async def _check_end_code(cls, ret: bytearray) -> None:
         """Checks if the end code is 00.
 
         If an error is present, the error name is printed.
@@ -168,8 +165,11 @@ class Omron(ABC):
         Args:
             ret (bytearray): Response from device
 
+        Raises:
+            ValueError: If an error is present
+
         Returns:
-            str: Error if present, None if no error
+            None
         """
         error_codes = {
             bytes("00", "ascii"): "Normal Completion",
@@ -190,7 +190,7 @@ class Omron(ABC):
         return
 
     @classmethod
-    async def _check_response_code(cls, ret: bytearray):
+    async def _check_response_code(cls, ret: bytearray) -> None:
         """Checks if the response code is 0000.
 
         If an error is present, the error name is printed.
@@ -198,8 +198,11 @@ class Omron(ABC):
         Args:
             ret (bytearray): Response from device
 
+        Raises:
+            ValueError: If an error is present
+
         Returns:
-            str: Error if present, None if no error
+            None
         """
         response_codes = {
             bytes("1001", "ascii"): "Command length too long",
@@ -580,6 +583,6 @@ class Omron(ABC):
             df = run(dev.monitors)
 
         Args:
-            setpoint (float[str, float]): The desired setpoint
+            setpoint (dict[str, float]): The desired setpoint
         """
         return await self._variable_area_read("8E0000", 6)

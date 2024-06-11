@@ -288,7 +288,9 @@ class AsyncPG:
 class DAQLogging:
     """Class for logging the data from OMRON devices. Creates and saves file to disk with given acquisition rate. Only used for standalone logging. Use external API for use as plugin."""
 
-    def __init__(self, Daq, qualities, rate, database) -> None:
+    def __init__(
+        self, Daq: DAQ, qualities: list[str], rate: int | float, database: str
+    ) -> None:
         """Initializes the Logging module.
 
         Note:
@@ -310,8 +312,8 @@ class DAQLogging:
         self.database = AsyncPG(
             user="app", password="app", database="app", host="127.0.0.1"
         )
-        self.qin = None
-        self.qout = None
+        self.qin: Queue[str | function | list[function | Any]] | None = None
+        self.qout: Queue[dict[str, str | float]] | None = None
         return
 
     def _key_func(self, x):
@@ -366,9 +368,7 @@ class DAQLogging:
                     *dev.values(),
                 )  # We could optimize this by using a single insert statement for all devices. We would have to make sure that the order of the values is the same for all devices and it would only work if they all have the same fields. That is, it wouldn't work for the flowmeter in our case because it has RH values
 
-    async def update_dict_log(
-        self, Daq, qualities
-    ) -> dict[str, dict[str, str | float]]:
+    async def update_dict_log(self, Daq: DAQ, qualities: list[str]) -> None:
         """Updates the dictionary with the new values.
 
         Args:
@@ -384,9 +384,9 @@ class DAQLogging:
     async def logging(
         self,
         write_async: bool = False,
-        duration: float = "",
-        rate: float = "",
-    ):
+        duration: float | None = None,
+        rate: float | None = None,
+    ) -> None:
         """Initializes the Logging module. Creates and saves file to disk with given acquisition rate.
 
         Args:
@@ -416,7 +416,7 @@ class DAQLogging:
                     # if stop_logging is in the queue, break out of the while loop
                     if comm == "Stop":
                         break
-                    else:
+                    elif isinstance(comm, list) and isinstance(comm[0], function):
                         df = await comm[0](*comm[1:])
                         self.qout.put(df)
                 # if not, continue logging
@@ -484,8 +484,13 @@ class DAQLogging:
             print(f"Total time: {(time.time_ns() - start) / 1e9} s with {reps} reps")
 
     def start_logging(
-        self, write_async: bool = False, duration: float = "", rate: float = ""
-    ) -> tuple[Queue, Queue]:
+        self,
+        write_async: bool = False,
+        duration: float | None = None,
+        rate: float | None = None,
+    ) -> tuple[
+        Queue[str | function | list[function | Any]], Queue[dict[str, str | float]]
+    ]:
         """Starts the logging process.
 
         Example:
@@ -500,15 +505,13 @@ class DAQLogging:
             tuple[Queue, Queue]: The input and output queues for the logging process.
         """
         # Create the queue
-        qin = Queue()
-        self.qin = qin
-        qout = Queue()
-        self.qout = qout
+        self.qin = Queue()
+        self.qout = Queue()
         # Start the logging process in a thread
         t = Thread(target=run, args=(self.logging, write_async, duration, rate))
         t.start()
         # Return the queue
-        return (qin, qout)
+        return (self.qin, self.qout)
 
     async def stop_logging(self):
         """Stops the logging process.
@@ -518,7 +521,8 @@ class DAQLogging:
         """
         # Needs to save the data into the file
         # Delete table in database?
-        self.qin.put("Stop")
+        if self.qin:
+            self.qin.put("Stop")
         return
 
     async def q_t(self, state1, state2):
@@ -528,7 +532,7 @@ class DAQLogging:
         time.sleep(10)
         return
 
-    async def set(self, *args):
+    async def set(self, *args: Any) -> dict[str, str | float] | None:
         """Set function for the DAQLogging class.
 
         Example:
@@ -536,13 +540,19 @@ class DAQLogging:
 
         Args:
             *args: The arguments to pass to the set function.
-        """
-        self.qin.put([self.Daq.set, *args])
-        while self.qout.empty():
-            pass
-        return self.qout.get()
 
-    async def get(self, *args):
+        Returns:
+            dict[str, str | float] | None: The dictionary of devices changed.
+        """
+        if self.qin and self.qout:
+            self.qin.put([self.Daq.set, *args])
+            while self.qout.empty():
+                pass
+            return self.qout.get()
+        else:
+            raise Exception("Logging process not started.")
+
+    async def get(self, *args: Any) -> dict[str, str | float]:
         """Get function for the DAQLogging class.
 
         Example:
@@ -551,7 +561,10 @@ class DAQLogging:
         Args:
             *args: The arguments to pass to the get function.
         """
-        self.qin.put([self.Daq.get, *args])
-        while self.qout.empty():
-            pass
-        return self.qout.get()
+        if self.qin and self.qout:
+            self.qin.put([self.Daq.get, *args])
+            while self.qout.empty():
+                pass
+            return self.qout.get()
+        else:
+            raise Exception("Logging process not started.")
