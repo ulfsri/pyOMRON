@@ -34,7 +34,7 @@ class Omron(ABC):
             **kwargs: Additional keyword arguments.
         """
         self._device = device
-        self._device_info = None
+        self._dev_info = None
         self._unit_no = unit_no
 
     @classmethod
