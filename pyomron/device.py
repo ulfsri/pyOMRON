@@ -7,7 +7,7 @@ Returns:
     Device: The new device.
 """
 
-import importlib
+import importlib.resources
 import json
 from abc import ABC
 from typing import Any, Self
@@ -18,8 +18,8 @@ from pyomron.comm import SerialDevice
 class Omron(ABC):
     """Omron class."""
 
-    codes = importlib.resources.files("pyomron").joinpath("codes.json")
-    with open(codes) as f:
+    codes_path = importlib.resources.files("pyomron").joinpath("codes.json")
+    with open(codes_path) as f:
         codes = json.load(f)
     addresses = codes["addresses"][0]
     C383_notation = codes["C383_notation"][0]

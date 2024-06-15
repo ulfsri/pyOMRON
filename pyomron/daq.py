@@ -28,8 +28,7 @@ class DAQ:
         TODO: Pass dictionary of names and addresses to initialize devices. Same async issue.
 
         """
-        global dev_list
-        dev_list = {}
+        self._dev_list: dict[str, Omron] = {}
 
         """
         for name in devs:
@@ -39,7 +38,7 @@ class DAQ:
         return
 
     @classmethod
-    async def init(cls, devs: dict[str, str | Omron] = "") -> "DAQ":
+    async def init(cls, devs: dict[str, str | Omron] | None = None) -> "DAQ":
         """Initializes the DAQ.
 
         Example:
@@ -52,12 +51,11 @@ class DAQ:
             DAQ: The DAQ object.
         """
         daq = cls()
-        await daq.add_device(devs)
+        if devs:
+            await daq.add_device(devs)
         return daq
 
-    async def add_device(
-        self, devs: dict[str, str | Omron] = "", **kwargs: Any
-    ) -> None:
+    async def add_device(self, devs: dict[str, str | Omron], **kwargs: Any) -> None:
         """Creates and initializes the devices.
 
         Args:
@@ -72,9 +70,9 @@ class DAQ:
             for name in devs:
                 if isinstance(devs[name], str):
                     dev = await Omron.new_device(devs[name], **kwargs)
-                    dev_list.update({name: dev})
+                    self._dev_list.update({name: dev})
                 elif isinstance(devs[name], Omron):
-                    dev_list.update({name: devs[name]})
+                    self._dev_list.update({name: devs[name]})
         return
 
     async def remove_device(self, name: list[str]) -> None:
@@ -84,8 +82,8 @@ class DAQ:
             name (list[str]): The list of devices to remove.
         """
         for n in name:
-            await dev_list[n]._device.close()
-            del dev_list[n]
+            await self._dev_list[n]._device.close()
+            del self._dev_list[n]
         return
 
     async def dev_list(self) -> dict[str, Omron]:
@@ -94,11 +92,14 @@ class DAQ:
         Returns:
             dict[str, device.Omron]: The list of devices and their objects.
         """
-        return dev_list
+        return self._dev_list
 
     async def update_dict_get(
-        self, ret_dict, dev, val
-    ) -> dict[str, dict[str, str | float]]:
+        self,
+        ret_dict: dict[str, dict[str, str | float | datetime]],
+        dev: str,
+        val: list[str],
+    ) -> dict[str, dict[str, str | float | datetime]]:
         """Updates the dictionary with the new values.
 
         Args:
@@ -110,7 +111,7 @@ class DAQ:
             dict: The dictionary of devices with the updated values.
         """
         start = datetime.now()
-        vals = await dev_list[dev].get(val)
+        vals = await self._dev_list[dev].get(val)
         vals.update(
             {
                 "Request Sent": start,
@@ -121,8 +122,8 @@ class DAQ:
         return ret_dict
 
     async def get(
-        self, val: list[str] = "", id: list[str] = ""
-    ) -> dict[str, dict[str | float]]:
+        self, val: list[str] | None = None, id: list[str] | None = None
+    ) -> dict[str, dict[str, str | float | datetime]]:
         """Gets the data from the device.
 
         If id not specified, returns data from all devices.
@@ -145,18 +146,20 @@ class DAQ:
             val = [val]
         if not id:
             async with create_task_group() as g:
-                for dev in dev_list:
+                for dev in self._dev_list:
                     g.start_soon(self.update_dict_get, ret_dict, dev, val)
-        if id and isinstance(id, str):
-            id = id.split()
-        async with create_task_group() as g:
-            for i in id:
-                g.start_soon(self.update_dict_get, ret_dict, i, val)
+        else:
+            async with create_task_group() as g:
+                for i in id:
+                    g.start_soon(self.update_dict_get, ret_dict, i, val)
         return ret_dict
 
     async def update_dict_set(
-        self, ret_dict, dev, command
-    ) -> dict[str, dict[str, str | float]]:
+        self,
+        ret_dict: dict[str, dict[str, str | float | datetime]],
+        dev: str,
+        command: list[str],
+    ) -> dict[str, dict[str, str | float | datetime]]:
         """Updates the dictionary with the new values.
 
         Args:
@@ -167,11 +170,11 @@ class DAQ:
         Returns:
             dict: The dictionary of devices with the updated values.
         """
-        ret_dict.update({dev: await dev_list[dev].set(command)})
+        ret_dict.update({dev: await self._dev_list[dev].set(command)})
         return ret_dict
 
     async def set(
-        self, command: dict[str, str | float], id: list[str] = ""
+        self, command: dict[str, str | float], id: list[str] | None = None
     ) -> dict[str, None]:
         """Sets the data of the device.
 
@@ -188,20 +191,17 @@ class DAQ:
             dict[str, None]: The dictionary of devices changed.
         """
         ret_dict = {}
-        if isinstance(command, str):
-            command = command.split()
         if not id:
             async with create_task_group() as g:
-                for dev in dev_list:
+                for dev in self._dev_list:
                     g.start_soon(self.update_dict_set, ret_dict, dev, command)
-        if isinstance(id, str):
-            id = id.split()
-        async with create_task_group() as g:
-            for i in id:
-                g.start_soon(self.update_dict_set, ret_dict, i, command)
+        else:
+            async with create_task_group() as g:
+                for i in id:
+                    g.start_soon(self.update_dict_set, ret_dict, i, command)
         return ret_dict
 
-    async def heat(self, setpoint: float, id: str | list = "") -> dict[str, None]:
+    async def heat(self, setpoint: float, id: str | list[str] = "") -> None:
         """Convenience: Sets the heater setpoint.
 
         Example:
@@ -215,25 +215,17 @@ class DAQ:
         Returns:
             dict[str, None]: The dictionary of devices changed.
         """
-        ret_dict = {}
         if not id:
-            for dev in dev_list:
-                ret_dict.update(
-                    {
-                        dev: await dev_list[dev].set(
-                            {"Communications Main Setting 1": setpoint}
-                        )
-                    }
+            for dev in self._dev_list:
+                await self._dev_list[dev].set(
+                    {"Communications Main Setting 1": setpoint}
                 )
-        if isinstance(id, str):
-            id = id.split()
-        for i in id:
-            ret_dict.update(
-                {i: await dev_list[i].set({"Communications Main Setting 1": setpoint})}
-            )
-        return ret_dict
+        else:
+            for i in id:
+                await self._dev_list[i].set({"Communications Main Setting 1": setpoint})
+        return None
 
-    async def monitors(self, id: str | list = "") -> dict[str, dict[str, float]]:
+    async def monitors(self, id: str | list[str] = "") -> dict[str, dict[str, float]]:
         """Convenience: Gets the current monitor values.
 
         Example:
@@ -248,12 +240,12 @@ class DAQ:
         """
         ret_dict = {}
         if not id:
-            for dev in dev_list:
-                ret_dict.update({dev: await dev_list[dev].monitors()})
+            for dev in self._dev_list:
+                ret_dict.update({dev: await self._dev_list[dev].monitors()})
         if isinstance(id, str):
             id = id.split()
         for i in id:
-            ret_dict.update({i: await dev_list[i].monitors()})
+            ret_dict.update({i: await self._dev_list[i].monitors()})
         return ret_dict
 
 
@@ -262,7 +254,7 @@ class AsyncPG:
 
     def __init__(self, **kwargs):
         """Initializes the AsyncPG object."""
-        self.conn = None
+        self.conn: asyncpg.Connection | None = None
         self.kwargs = kwargs
 
     async def __aenter__(self):
@@ -282,7 +274,8 @@ class AsyncPG:
             exc: The exception.
             tb: The traceback.
         """
-        await self.conn.close()
+        if self.conn:
+            await self.conn.close()
         self.conn = None
 
 
@@ -407,10 +400,10 @@ class DAQLogging:
             for dev in self.df:
                 unique.update(self.df[dev])
             await self.create_table(unique, conn)
-            start = time.time_ns()
+            start = time.perf_counter_ns()
             prev = start
             reps = 0
-            while (time.time_ns() - start) / 1e9 <= duration:
+            while (time.perf_counter_ns() - start) / 1e9 <= duration:
                 # Check if something in queue
                 if not self.qin.empty():
                     comm = self.qin.get()
@@ -421,20 +414,23 @@ class DAQLogging:
                         df = await comm[0](*comm[1:])
                         self.qout.put(df)
                 # if not, continue logging
-                if time.time_ns() / 1e9 - (reps * 1 / rate + start / 1e9) >= 1 / rate:
+                if (
+                    time.perf_counter_ns() / 1e9 - (reps * 1 / rate + start / 1e9)
+                    >= 1 / rate
+                ):
                     # Check if something is in the queue
                     # print(
-                    #     f"Difference between readings: {(time.time_ns() - prev) / 1e9} s"
+                    #     f"Difference between readings: {(time.perf_counter_ns() - prev) / 1e9} s"
                     # )
                     # if (
-                    #     abs(time.time_ns() / 1e9 - reps * 1 / rate - start / 1e9)
+                    #     abs(time.perf_counter_ns() / 1e9 - reps * 1 / rate - start / 1e9)
                     #     > 1.003 / rate
                     # ):
                     #     warnings.warn("Warning! Acquisition rate is too high!")
-                    time1 = time.time_ns()
-                    prev = time.time_ns()
+                    time1 = time.perf_counter_ns()
+                    prev = time.perf_counter_ns()
                     if write_async:
-                        nurse_time = time.time_ns()
+                        nurse_time = time.perf_counter_ns()
                         # open_nursery
                         async with create_task_group() as g:
                             # insert_data from the previous iteration
@@ -442,11 +438,11 @@ class DAQLogging:
                             # get
                             g.start_soon(self.update_dict_log, self.Daq, self.qualities)
                     else:
-                        nurse_time = time.time_ns()
+                        nurse_time = time.perf_counter_ns()
                         # Get the data
                         self.df = await self.Daq.get(self.qualities)
                         # Write the data from this iteration
-                    time2 = time.time_ns()
+                    time2 = time.perf_counter_ns()
                     rows = []
                     for dev in self.df:
                         rows.append(
@@ -466,23 +462,25 @@ class DAQLogging:
                             }
                         )
                     # print(f"Process took {(time2 - time1) / 1e6} ms")
-                    time3 = time.time_ns()
+                    time3 = time.perf_counter_ns()
                     if not write_async:
                         await self.insert_data(
                             rows, conn
                         )  # This takes a little bit (~8 ms). I think we should run this in a nursery with the next .get() call. That means that we will have to wait until the next loop to submit the data from the previous iteration.
-                    time4 = time.time_ns()
+                    time4 = time.perf_counter_ns()
                     # print(f"Insert took {(time4 - time3) / 1e6} ms")
                     print(
                         f"Time with nursery is {write_async}: {(time4 - nurse_time) / 1e6} ms"
                     )
                     reps += 1
-                    while (time.time_ns() - start) / 1e9 / (
+                    while (time.perf_counter_ns() - start) / 1e9 / (
                         1 / rate
                     ) >= 1.00 * reps + 1:
                         reps += 1
                         warnings.warn("Warning! Process takes too long!")
-            print(f"Total time: {(time.time_ns() - start) / 1e9} s with {reps} reps")
+            print(
+                f"Total time: {(time.perf_counter_ns() - start) / 1e9} s with {reps} reps"
+            )
 
     def start_logging(
         self,
