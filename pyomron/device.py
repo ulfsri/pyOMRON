@@ -575,7 +575,7 @@ class Omron(ABC):
         Args:
             setpoint (float): The desired setpoint
         """
-        await self.set({"Communications Main Setting 1": setpoint})
+        await self.set({"Communications_Main_Setting_1": setpoint})
         return
 
     async def monitors(self) -> dict[str, float]:
